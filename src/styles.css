@@ -1,0 +1,106 @@
+@import url("https://fonts.googleapis.com/css2?family=Nunito:wght@500;600;700;800;900&display=swap");
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Nunito", ui-sans-serif, system-ui, sans-serif;
+  color: #30313d;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+.page {
+  padding: 28px;
+}
+
+.panel {
+  border: 1px solid #f4d1d9;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 14px 40px rgba(48, 49, 61, 0.08);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  border-radius: 12px;
+  padding: 0.65rem 0.9rem;
+  font-weight: 800;
+  transition: 160ms ease;
+}
+
+.btn-primary {
+  background: #e85c7b;
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #d84467;
+}
+
+.btn-ghost {
+  background: white;
+  border: 1px solid #f4d1d9;
+  color: #30313d;
+}
+
+.field {
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid #e7dfe3;
+  background: white;
+  padding: 0.65rem 0.75rem;
+  outline: none;
+}
+
+.field:focus {
+  border-color: #e85c7b;
+  box-shadow: 0 0 0 3px rgba(232, 92, 123, 0.14);
+}
+
+.node-card {
+  min-width: 235px;
+  border-radius: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 0 18px 34px rgba(48, 49, 61, 0.18), 0 0 0 1px rgba(48, 49, 61, 0.04);
+  padding: 12px 14px;
+  font-weight: 800;
+  position: relative;
+  overflow: visible;
+}
+
+.node-card .react-flow__handle {
+  height: 8px;
+  width: 8px;
+  border: 2px solid #30313d;
+  background: #fff;
+}
+
+.react-flow__node.selected .node-card {
+  border-color: #e85c7b;
+}
+
+.react-flow__edge-path {
+  stroke: #7d8798;
+  stroke-width: 2.5;
+  filter: none;
+}
+
+.react-flow__controls {
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid #f4d1d9;
+  box-shadow: 0 10px 22px rgba(48, 49, 61, 0.1);
+}
