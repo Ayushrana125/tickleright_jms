@@ -11,7 +11,7 @@ import {
   useEdgesState,
   useNodesState,
 } from "@xyflow/react";
-import { ArrowLeft, CheckCircle2, Clock, GitBranch, Gift, Maximize2, Minimize2, Minus, Pause, Play, Plus, Save, Send, Square, Zap } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Cog, GitBranch, Maximize2, Minimize2, Minus, Pause, Play, Plus, Save, Square, UserRound, Zap } from "lucide-react";
 import ChannelBadge from "../components/ChannelBadge.jsx";
 import PageHeader from "../components/PageHeader.jsx";
 import { useData } from "../store/DataContext.jsx";
@@ -64,8 +64,8 @@ function NodeShell({ data, tone, icon }) {
 const nodeTypes = {
   start: ({ data }) => <NodeShell data={data} tone="bg-[#ffe58a]" icon={<Zap size={16} />} />,
   event: ({ data }) => <NodeShell data={data} tone="bg-[#ffe58a]" icon={<Zap size={16} />} />,
-  step: ({ data }) => <NodeShell data={data} tone="bg-[#ffc7d5]" icon={<Send size={16} />} />,
-  human: ({ data }) => <NodeShell data={data} tone="bg-[#ffc7d5]" icon={data.template?.channel === "Gift" ? <Gift size={16} /> : <Clock size={16} />} />,
+  step: ({ data }) => <NodeShell data={data} tone="bg-[#ffc7d5]" icon={<Cog size={16} />} />,
+  human: ({ data }) => <NodeShell data={data} tone="bg-[#ffc7d5]" icon={<UserRound size={16} />} />,
   route: ({ data }) => <NodeShell data={data} tone="bg-[#ffc7d5]" icon={<GitBranch size={16} />} />,
   end: ({ data }) => <NodeShell data={data} tone="bg-[#ffc7d5]" icon={<CheckCircle2 size={16} />} />,
 };
