@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ReactFlow,
   Background,
@@ -21,6 +21,11 @@ const metricLabels = [
   ["Sent", "sent"],
   ["Opened", "opened"],
 ];
+
+const stripNodeUiData = (node) => {
+  const { template, metrics, isLeaf, isSelected, onAddAfter, nodeId, ...data } = node.data;
+  return { ...node, data };
+};
 
 function NodeShell({ data, tone, icon }) {
   return (
@@ -77,41 +82,61 @@ export default function Journey() {
   const childCount = data.members.length;
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const [selectedNodeId, setSelectedNodeId] = useState("start");
+  const nodesRef = useRef([]);
+  const edgesRef = useRef([]);
+
+  useEffect(() => {
+    nodesRef.current = nodes;
+  }, [nodes]);
+
+  useEffect(() => {
+    edgesRef.current = edges;
+  }, [edges]);
+
   const addStepAfter = useCallback((sourceNodeId) => {
+    if (!selectedJourney) return;
     const id = `node-${Date.now()}`;
     const template = data.templates[0];
-    setNodes((current) => {
-      const sourceNode = current.find((node) => node.id === sourceNodeId);
-      return [
-        ...current,
-        {
-          id,
-          type: "step",
-          position: {
-            x: sourceNode?.position?.x ?? 420,
-            y: (sourceNode?.position?.y ?? 120) + 220,
-          },
-          data: {
-            label: "New journey step",
-            offset: 7,
-            unit: "Days",
-            reference: sourceNode?.data?.reference || "M",
-            templateId: template?.id,
-            template,
-            avoidSundays: true,
-            checkFestivalCalendar: false,
-            checkContentCalendar: true,
-          },
-        },
-      ];
-    });
-    setEdges((current) => addEdge({ id: `e-${sourceNodeId}-${id}`, source: sourceNodeId, target: id, type: "smoothstep", animated: selectedJourney?.status === "Active" }, current));
+    const currentNodes = nodesRef.current;
+    const currentEdges = edgesRef.current;
+    const sourceNode = currentNodes.find((node) => node.id === sourceNodeId) || currentNodes[currentNodes.length - 1];
+    const newNode = {
+      id,
+      type: "step",
+      position: {
+        x: sourceNode?.position?.x ?? 420,
+        y: (sourceNode?.position?.y ?? 120) + 220,
+      },
+      data: {
+        label: "New journey step",
+        offset: 7,
+        unit: "Days",
+        reference: sourceNode?.data?.reference || "M",
+        templateId: template?.id,
+        template,
+        avoidSundays: true,
+        checkFestivalCalendar: false,
+        checkContentCalendar: true,
+      },
+    };
+    const newEdge = {
+      id: `e-${sourceNodeId}-${id}`,
+      source: sourceNodeId,
+      target: id,
+      type: "smoothstep",
+      animated: selectedJourney.status === "Active",
+    };
+    const nextNodes = [...currentNodes, newNode];
+    const nextEdges = addEdge(newEdge, currentEdges);
+    setNodes(nextNodes);
+    setEdges(nextEdges);
+    updateJourneyGraph(selectedJourney.id, nextNodes.map(stripNodeUiData), nextEdges);
     setSelectedNodeId(id);
-  }, [data.templates, selectedJourney?.status, setEdges, setNodes]);
+  }, [data.templates, selectedJourney, setEdges, setNodes, updateJourneyGraph]);
 
   const hydratedNodes = useMemo(
     () => {
-      const outgoing = new Set((selectedJourney?.edges || []).map((edge) => edge.source));
       return (selectedJourney?.nodes || []).map((node, index) => {
         const template = data.templates.find((item) => item.id === node.data.templateId);
         return {
@@ -121,15 +146,12 @@ export default function Journey() {
             template,
             metrics: makeNodeMetrics(node, index, childCount),
             nodeId: node.id,
-            isLeaf: !outgoing.has(node.id),
-            onAddAfter: addStepAfter,
           },
         };
       });
     },
-    [selectedJourney, data.templates, childCount, addStepAfter]
+    [selectedJourney?.id, selectedJourney?.nodes, data.templates, childCount]
   );
-  const [selectedNodeId, setSelectedNodeId] = useState("start");
   const [logs, setLogs] = useState([]);
   const [simulating, setSimulating] = useState(false);
   const [speed, setSpeed] = useState("1 day = 1 minute");
@@ -140,7 +162,28 @@ export default function Journey() {
     setNodes(hydratedNodes);
     setEdges((selectedJourney?.edges || []).map((edge) => ({ ...edge, animated: selectedJourney?.status === "Active" })));
     setSelectedNodeId((hydratedNodes[0] || {}).id);
-  }, [hydratedNodes, selectedJourney?.edges, selectedJourney?.status, setEdges, setNodes]);
+  }, [hydratedNodes, selectedJourney?.id, selectedJourney?.status, setEdges, setNodes]);
+
+  useEffect(() => {
+    const outgoing = new Set(edges.map((edge) => edge.source));
+    setNodes((current) =>
+      current.map((node, index) => {
+        const template = data.templates.find((item) => item.id === node.data.templateId);
+        return {
+          ...node,
+          data: {
+            ...node.data,
+            template,
+            metrics: makeNodeMetrics(node, index, childCount),
+            nodeId: node.id,
+            isLeaf: !outgoing.has(node.id),
+            isSelected: node.id === selectedNodeId,
+            onAddAfter: addStepAfter,
+          },
+        };
+      })
+    );
+  }, [edges, selectedNodeId, data.templates, childCount, addStepAfter, setNodes]);
 
   useEffect(() => {
     if (!simulating) return undefined;
@@ -175,36 +218,59 @@ export default function Journey() {
   );
   const counts = selectedJourney ? data.journeyMembers.filter((jm) => jm.journeyId === selectedJourney.id) : [];
 
+  const getCleanGraph = () => {
+    return { nodes: nodes.map(stripNodeUiData), edges };
+  };
+
   const saveGraph = () => {
     if (!selectedJourney) return;
-    const cleanNodes = nodes.map(({ data: nodeData, ...node }) => {
-      const { template, metrics, isLeaf, onAddAfter, nodeId, ...rest } = nodeData;
-      return { ...node, data: rest };
-    });
-    updateJourneyGraph(selectedJourney.id, cleanNodes, edges);
+    const cleanGraph = getCleanGraph();
+    updateJourneyGraph(selectedJourney.id, cleanGraph.nodes, cleanGraph.edges);
   };
 
   const addStep = () => {
+    if (!selectedJourney) return;
     const id = `node-${Date.now()}`;
-    setNodes((current) => [
-      ...current,
-      {
-        id,
-        type: "step",
-        position: { x: 720, y: 240 },
-        data: {
-          label: "New journey step",
-          offset: 45,
-          unit: "Days",
-          reference: "M",
-          templateId: data.templates[0]?.id,
-          template: data.templates[0],
-          avoidSundays: true,
-          checkFestivalCalendar: false,
-          checkContentCalendar: true,
-        },
+    const template = data.templates[0];
+    const currentNodes = nodesRef.current;
+    const currentEdges = edgesRef.current;
+    const outgoing = new Set(currentEdges.map((edge) => edge.source));
+    const selected = currentNodes.find((node) => node.id === selectedNodeId);
+    const lastLeaf = [...currentNodes].reverse().find((node) => !outgoing.has(node.id));
+    const sourceNode = selected || lastLeaf || currentNodes[currentNodes.length - 1];
+    const newNode = {
+      id,
+      type: "step",
+      position: {
+        x: sourceNode?.position?.x ?? 420,
+        y: (sourceNode?.position?.y ?? 120) + 220,
       },
-    ]);
+      data: {
+        label: "New journey step",
+        offset: 7,
+        unit: "Days",
+        reference: sourceNode?.data?.reference || "M",
+        templateId: template?.id,
+        template,
+        avoidSundays: true,
+        checkFestivalCalendar: false,
+        checkContentCalendar: true,
+      },
+    };
+    const newEdge = sourceNode
+      ? {
+          id: `e-${sourceNode.id}-${id}`,
+          source: sourceNode.id,
+          target: id,
+          type: "smoothstep",
+          animated: selectedJourney.status === "Active",
+        }
+      : null;
+    const nextNodes = [...currentNodes, newNode];
+    const nextEdges = newEdge ? addEdge(newEdge, currentEdges) : currentEdges;
+    setNodes(nextNodes);
+    setEdges(nextEdges);
+    updateJourneyGraph(selectedJourney.id, nextNodes.map(stripNodeUiData), nextEdges);
     setSelectedNodeId(id);
   };
 
@@ -325,7 +391,8 @@ export default function Journey() {
               onClick={() => {
                 const nextStatus = selectedJourney.status === "Active" ? "Paused" : "Active";
                 setEdges((current) => current.map((edge) => ({ ...edge, animated: nextStatus === "Active" })));
-                updateJourney(selectedJourney.id, { status: nextStatus });
+                const cleanGraph = getCleanGraph();
+                updateJourney(selectedJourney.id, { status: nextStatus, nodes: cleanGraph.nodes, edges: cleanGraph.edges });
               }}
             >
               {selectedJourney.status === "Active" ? <Pause size={17} /> : <Play size={17} />}
