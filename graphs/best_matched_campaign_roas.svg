@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="778" viewBox="0 0 1100 778">
+<rect width="100%" height="100%" fill="#fbfaf7"/>
+<text x="36" y="42" font-family="Segoe UI, sans-serif" font-size="26" font-weight="700" fill="#172033">Best Matched Campaigns By ROAS</text>
+<text x="36" y="70" font-family="Segoe UI, sans-serif" font-size="14" fill="#5f6b7a">Campaign-name matched ROAS using CRM first payment amount</text>
+<text x="36" y="112" font-family="Segoe UI, sans-serif" font-size="13" fill="#293241">AK | Online | May 25 | Summer Camp</text>
+<rect x="310" y="92" width="600" height="24" rx="4" fill="#ece7df"/>
+<rect x="310" y="92" width="600" height="24" rx="4" fill="#2563eb"/>
+<text x="920" y="109" font-family="Segoe UI, sans-serif" font-size="13" fill="#293241">23</text>
+<text x="36" y="154" font-family="Segoe UI, sans-serif" font-size="13" fill="#293241">TR_Lead Gen Borivali</text>
+<rect x="310" y="134" width="600" height="24" rx="4" fill="#ece7df"/>
+<rect x="310" y="134" width="204" height="24" rx="4" fill="#059669"/>
+<text x="524" y="151" font-family="Segoe UI, sans-serif" font-size="13" fill="#293241">8</text>
+<text x="36" y="196" font-family="Segoe UI, sans-serif" font-size="13" fill="#293241">TR_Del Lead Gen</text>
+<rect x="310" y="176" width="600" height="24" rx="4" fill="#ece7df"/>
+<rect x="310" y="176" width="131" height="24" rx="4" fill="#d97706"/>
+<text x="451" y="193" font-family="Segoe UI, sans-serif" font-size="13" fill="#293241">5</text>
+<text x="36" y="238" font-family="Segoe UI, sans-serif" font-size="13" fill="#293241">TR | Online campaign</text>
+<rect x="310" y="218" width="600" height="24" rx="4" fill="#ece7df"/>
+<rect x="310" y="218" width="92" height="24" rx="4" fill="#dc2626"/>
+<text x="412" y="235" font-family="Segoe UI, sans-serif" font-size="13" fill="#293241">4</text>
+<text x="36" y="280" font-family="Segoe UI, sans-serif" font-size="13" fill="#293241">TR_Mum Lead Gen</text>
+<rect x="310" y="260" width="600" height="24" rx="4" fill="#ece7df"/>
+<rect x="310" y="260" width="87" height="24" rx="4" fill="#7c3aed"/>
+<text x="407" y="277" font-family="Segoe UI, sans-serif" font-size="13" fill="#293241">3</text>
+<text x="36" y="322" font-family="Segoe UI, sans-serif" font-size="13" fill="#293241">AK | Online | July 2025 | Coim</text>
+<rect x="310" y="302" width="600" height="24" rx="4" fill="#ece7df"/>
+<rect x="310" y="302" width="83" height="24" rx="4" fill="#0891b2"/>
+<text x="403" y="319" font-family="Segoe UI, sans-serif" font-size="13" fill="#293241">3</text>
+<text x="36" y="364" font-family="Segoe UI, sans-serif" font-size="13" fill="#293241">AK | Online | July 2025 | Demo</text>
+<rect x="310" y="344" width="600" height="24" rx="4" fill="#ece7df"/>
+<rect x="310" y="344" width="75" height="24" rx="4" fill="#2563eb"/>
+<text x="395" y="361" font-family="Segoe UI, sans-serif" font-size="13" fill="#293241">3</text>
+<text x="36" y="406" font-family="Segoe UI, sans-serif" font-size="13" fill="#293241">MH | TR Remarketing Feb-24</text>
+<rect x="310" y="386" width="600" height="24" rx="4" fill="#ece7df"/>
+<rect x="310" y="386" width="72" height="24" rx="4" fill="#059669"/>
+<text x="392" y="403" font-family="Segoe UI, sans-serif" font-size="13" fill="#293241">3</text>
+<text x="36" y="448" font-family="Segoe UI, sans-serif" font-size="13" fill="#293241">AK | Online | Apr 2025 | BAN</text>
+<rect x="310" y="428" width="600" height="24" rx="4" fill="#ece7df"/>
+<rect x="310" y="428" width="58" height="24" rx="4" fill="#d97706"/>
+<text x="378" y="445" font-family="Segoe UI, sans-serif" font-size="13" fill="#293241">2</text>
+<text x="36" y="490" font-family="Segoe UI, sans-serif" font-size="13" fill="#293241">ABO |Video | Meta Ads | 5/11/25</text>
+<rect x="310" y="470" width="600" height="24" rx="4" fill="#ece7df"/>
+<rect x="310" y="470" width="51" height="24" rx="4" fill="#dc2626"/>
+<text x="371" y="487" font-family="Segoe UI, sans-serif" font-size="13" fill="#293241">2</text>
+<text x="36" y="532" font-family="Segoe UI, sans-serif" font-size="13" fill="#293241">TR_LeadGen_Oct25</text>
+<rect x="310" y="512" width="600" height="24" rx="4" fill="#ece7df"/>
+<rect x="310" y="512" width="49" height="24" rx="4" fill="#7c3aed"/>
+<text x="369" y="529" font-family="Segoe UI, sans-serif" font-size="13" fill="#293241">2</text>
+<text x="36" y="574" font-family="Segoe UI, sans-serif" font-size="13" fill="#293241">ABO | Meta Leads | 241025</text>
+<rect x="310" y="554" width="600" height="24" rx="4" fill="#ece7df"/>
+<rect x="310" y="554" width="48" height="24" rx="4" fill="#0891b2"/>
+<text x="368" y="571" font-family="Segoe UI, sans-serif" font-size="13" fill="#293241">2</text>
+<text x="36" y="616" font-family="Segoe UI, sans-serif" font-size="13" fill="#293241">MH | TR Free Demo Pune- 24</text>
+<rect x="310" y="596" width="600" height="24" rx="4" fill="#ece7df"/>
+<rect x="310" y="596" width="31" height="24" rx="4" fill="#2563eb"/>
+<text x="351" y="613" font-family="Segoe UI, sans-serif" font-size="13" fill="#293241">1</text>
+<text x="36" y="658" font-family="Segoe UI, sans-serif" font-size="13" fill="#293241">MH | TR Free Demo Jaipur 24</text>
+<rect x="310" y="638" width="600" height="24" rx="4" fill="#ece7df"/>
+<rect x="310" y="638" width="22" height="24" rx="4" fill="#059669"/>
+<text x="342" y="655" font-family="Segoe UI, sans-serif" font-size="13" fill="#293241">1</text>
+<text x="36" y="700" font-family="Segoe UI, sans-serif" font-size="13" fill="#293241">Videos | Meta Leads | 301025</text>
+<rect x="310" y="680" width="600" height="24" rx="4" fill="#ece7df"/>
+<rect x="310" y="680" width="10" height="24" rx="4" fill="#d97706"/>
+<text x="330" y="697" font-family="Segoe UI, sans-serif" font-size="13" fill="#293241">0</text>
+</svg>

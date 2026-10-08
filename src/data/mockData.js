@@ -16,7 +16,18 @@ const daysAgo = (days) => {
 const makeMembers = () =>
   Array.from({ length: 570 }, (_, index) => {
     const city = cities[index % cities.length];
-    const stage = stages[(index * 7) % stages.length];
+    // Realistic funnel weighting: Lead ~40%, Active ~35%, Graduated ~14%, Discontinued ~8%, Franchise ~3%
+    const rand = (index * 13) % 100;
+    const stage =
+      rand < 40
+        ? "Lead"
+        : rand < 75
+        ? "Active Member"
+        : rand < 89
+        ? "Graduated"
+        : rand < 97
+        ? "Discontinued"
+        : "Franchise Interest";
     const child = firstNames[index % firstNames.length];
     const parent = `${firstNames[(index + 3) % firstNames.length]} ${lastNames[index % lastNames.length]}`;
     return {
@@ -195,7 +206,7 @@ export const journeyNodes = [
   {
     id: "start",
     type: "start",
-    position: { x: 420, y: 20 },
+    position: { x: 50, y: 300 },
     data: {
       label: "Member Joined the Program",
       triggerKind: "Event-based",
@@ -205,13 +216,13 @@ export const journeyNodes = [
     },
   },
   ...[
-    ["n1", "Welcome & Onboarding", 1, "tpl-welcome", 420, 230],
-    ["n5", "Trainer Introduction", 5, "tpl-trainer-intro", 420, 440],
-    ["n9", "Personal check-in call", 9, "tpl-call-checkin", 420, 650],
-    ["n17", "Learning Resource Share", 17, "tpl-progress-resource", 420, 860],
-    ["n30", "Parent Check-in", 30, "tpl-parent-checkin", 420, 1070],
-    ["n100", "Send a small gift", 100, "tpl-gift-small", 420, 1280],
-    ["n367", "Annual Connection", 367, "tpl-annual", 420, 1490],
+    ["n1", "Welcome & Onboarding", 1, "tpl-welcome", 370, 300],
+    ["n5", "Trainer Introduction", 5, "tpl-trainer-intro", 690, 300],
+    ["n9", "Personal check-in call", 9, "tpl-call-checkin", 1010, 300],
+    ["n17", "Learning Resource Share", 17, "tpl-progress-resource", 1330, 300],
+    ["n30", "Parent Check-in", 30, "tpl-parent-checkin", 1650, 300],
+    ["n100", "Send a small gift", 100, "tpl-gift-small", 1970, 300],
+    ["n367", "Annual Connection", 367, "tpl-annual", 2290, 300],
   ].map(([id, label, offset, templateId, x, y]) => ({
     id,
     type: ["tpl-call-checkin", "tpl-gift-small"].includes(templateId) ? "human" : "step",
@@ -229,7 +240,7 @@ export const journeyNodes = [
   {
     id: "d-event",
     type: "event",
-    position: { x: 90, y: 1710 },
+    position: { x: 2610, y: 490 },
     data: {
       label: "Discontinued",
       triggerKind: "Event-based",
@@ -242,7 +253,7 @@ export const journeyNodes = [
   {
     id: "g-event",
     type: "event",
-    position: { x: 420, y: 1705 },
+    position: { x: 2610, y: 110 },
     data: {
       label: "Graduate",
       triggerKind: "Event-based",
@@ -253,13 +264,13 @@ export const journeyNodes = [
     },
   },
   ...[
-    ["d3", "Personal check-in", 3, "tpl-discontinued-call", 90, 1920, "D"],
-    ["d7", "Understand the reason", 7, "tpl-discontinued-reason", 90, 2130, "D"],
-    ["d30", "Recovery or community connection", 30, "tpl-recovery-community", 90, 2340, "D"],
-    ["g0", "Graduation recognition", 0, "tpl-grad-recognition", 750, 1920, "G"],
-    ["g7", "Alumni learning resources", 7, "tpl-alumni-resources", 750, 2130, "G"],
-    ["g30", "Trainer and community connection", 30, "tpl-community-trainer", 750, 2340, "G"],
-    ["g90", "Events and referrals", 90, "tpl-events-referrals", 750, 2550, "G"],
+    ["d3", "Personal check-in", 3, "tpl-discontinued-call", 2930, 490, "D"],
+    ["d7", "Understand the reason", 7, "tpl-discontinued-reason", 3250, 490, "D"],
+    ["d30", "Recovery or community connection", 30, "tpl-recovery-community", 3570, 490, "D"],
+    ["g0", "Graduation recognition", 0, "tpl-grad-recognition", 2930, 110, "G"],
+    ["g7", "Alumni learning resources", 7, "tpl-alumni-resources", 3250, 110, "G"],
+    ["g30", "Trainer and community connection", 30, "tpl-community-trainer", 3570, 110, "G"],
+    ["g90", "Events and referrals", 90, "tpl-events-referrals", 3890, 110, "G"],
   ].map(([id, label, offset, templateId, x, y, ref]) => ({
     id,
     type: ["tpl-discontinued-call", "tpl-community-trainer"].includes(templateId) ? "human" : "step",
@@ -278,7 +289,7 @@ export const journeyNodes = [
   {
     id: "community",
     type: "end",
-    position: { x: 420, y: 2780 },
+    position: { x: 4210, y: 300 },
     data: { label: "Tickle Right Community", description: "Ongoing alumni meetups, community events, referrals, and advocacy." },
   },
 ];
@@ -312,40 +323,164 @@ export const journeyEdges = [
 
 const members = makeMembers();
 
-const starterJourney = ({ id, name, status, tag, event, reference, modifiedDays, baselineCompletion }) => ({
-  id,
-  name,
-  status,
-  tag,
-  modifiedAt: daysAgo(modifiedDays),
-  trigger: { type: "Event-based", event, reference },
-  nodes: [
-    {
-      id: `${id}-start`,
-      type: "start",
-      position: { x: 420, y: 40 },
-      data: {
-        label: event,
-        triggerKind: "Event-based",
-        triggerEvent: event,
-        audienceSegmentId: "seg-all",
-        exclusions: [],
-      },
+const makeStarterJourney = ({ id, name, status, tag, event, reference, modifiedDays, baselineCompletion, steps }) => {
+  const startNode = {
+    id: `${id}-start`,
+    type: "start",
+    position: { x: 50, y: 300 },
+    data: {
+      label: event,
+      triggerKind: "Event-based",
+      triggerEvent: event,
+      reference,
+      audienceSegmentId: "seg-all",
+      exclusions: [],
     },
-  ],
-  edges: [],
-  baselineCompletion,
-});
+  };
+
+  const stepNodes = (steps || []).map((step, idx) => ({
+    id: `${id}-s${idx + 1}`,
+    type: step.isHuman ? "human" : "step",
+    position: { x: 370 + idx * 320, y: 300 },
+    data: {
+      label: step.label,
+      offset: step.offset,
+      unit: "Days",
+      reference,
+      templateId: step.templateId,
+      avoidSundays: true,
+      checkFestivalCalendar: true,
+      checkContentCalendar: true,
+    },
+  }));
+
+  const allNodes = [startNode, ...stepNodes];
+  const edges = [];
+  for (let i = 0; i < allNodes.length - 1; i++) {
+    edges.push({
+      id: `e-${allNodes[i].id}-${allNodes[i + 1].id}`,
+      source: allNodes[i].id,
+      target: allNodes[i + 1].id,
+      type: "smoothstep",
+      animated: status === "Active",
+    });
+  }
+
+  return {
+    id,
+    name,
+    status,
+    tag,
+    modifiedAt: daysAgo(modifiedDays),
+    trigger: { type: "Event-based", event, reference },
+    nodes: allNodes,
+    edges,
+    baselineCompletion,
+  };
+};
+
+export const seededEvents = [
+  {
+    id: "ev-member-join",
+    name: "Member Joined the Program",
+    reference: "M",
+    triggerType: "Date / Database Column",
+    dbField: "members.creation_date",
+    segmentId: "seg-all",
+    description: "Fires when a new member record is inserted or creation_date matches today. Starts the foundational onboarding sequence.",
+    linkedJourneys: ["Member Journey"],
+    status: "Active",
+  },
+  {
+    id: "ev-trial-inquiry",
+    name: "New Trial Inquiry",
+    reference: "L",
+    triggerType: "Real-time API / Webhook",
+    dbField: "leads.created_at",
+    segmentId: "seg-all",
+    description: "Triggered instantly via website form webhook when a parent requests a right-brain demo class.",
+    linkedJourneys: ["Cold Lead Nurture"],
+    status: "Active",
+  },
+  {
+    id: "ev-renewal-30",
+    name: "Renewal Due (30 Days Out)",
+    reference: "R",
+    triggerType: "Scheduled Cron Query",
+    dbField: "subscriptions.expiry_date - 30 days",
+    segmentId: "seg-active",
+    description: "Daily 6:00 AM cron query matching active enrolled families whose term expires in exactly 30 calendar days.",
+    linkedJourneys: ["Renewal Reminder Journey"],
+    status: "Active",
+  },
+  {
+    id: "ev-consecutive-absent",
+    name: "Child Absent 2 Consecutive Classes",
+    reference: "A",
+    triggerType: "Operational / Trainer Log",
+    dbField: "attendance.consecutive_missed >= 2",
+    segmentId: "seg-active",
+    description: "Fires automatically when centre trainer marks 2 consecutive unattended sessions on the tablet.",
+    linkedJourneys: [],
+    status: "Active",
+  },
+  {
+    id: "ev-milestone-100",
+    name: "100-Day Right-Brain Milestone",
+    reference: "K",
+    triggerType: "Scheduled Cron Query",
+    dbField: "members.enrollment_date + 100 days",
+    segmentId: "seg-active",
+    description: "Calculates enrolled tenure daily to dispatch milestone physical gifts and congratulatory cards.",
+    linkedJourneys: ["Member Journey"],
+    status: "Active",
+  },
+  {
+    id: "ev-graduation",
+    name: "Program Graduation / Alumni",
+    reference: "G",
+    triggerType: "Date / Database Column",
+    dbField: "members.graduation_date",
+    segmentId: "seg-graduated",
+    description: "Triggered on official course graduation date to transition family into the alumni circle.",
+    linkedJourneys: ["Alumni Community Circle"],
+    status: "Active",
+  },
+  {
+    id: "ev-birthday",
+    name: "Child Birthday (7 Days Prior)",
+    reference: "B",
+    triggerType: "Scheduled Cron Query",
+    dbField: "children.dob - 7 days",
+    segmentId: "seg-all",
+    description: "Annual anniversary cron scanning child date of birth 7 days in advance for personalized surprise greeting.",
+    linkedJourneys: [],
+    status: "Active",
+  },
+  {
+    id: "ev-discontinued",
+    name: "Member Discontinued",
+    reference: "D",
+    triggerType: "State Transition / CRM",
+    dbField: "members.status = 'Discontinued'",
+    segmentId: "seg-discontinued-30",
+    description: "Fired when counsellor marks family as discontinued to initiate gentle winback & feedback collection.",
+    linkedJourneys: ["Winback & Feedback Journey"],
+    status: "Active",
+  },
+];
 
 export const initialData = {
   members,
+  events: seededEvents,
   segments: [
-    { id: "seg-all", name: "All Members", criteria: {}, count: 570 },
-    { id: "seg-active", name: "Active Members", criteria: { lifecycleStage: "Active Member" }, count: 114 },
-    { id: "seg-graduated", name: "Graduated", criteria: { lifecycleStage: "Graduated" }, count: 114 },
-    { id: "seg-age-4-6", name: "Age 4-6", criteria: { ageMin: 4, ageMax: 6 }, count: 214 },
-    { id: "seg-mumbai", name: "Mumbai Centre", criteria: { city: "Mumbai" }, count: 82 },
-    { id: "seg-discontinued-30", name: "Discontinued - Last 30 Days", criteria: { lifecycleStage: "Discontinued" }, count: 114 },
+    { id: "seg-all", name: "All Enrolled Members", criteria: {}, count: 6420 },
+    { id: "seg-active", name: "Active Members", criteria: { lifecycleStage: "Active Member" }, count: 6420 },
+    { id: "seg-graduated", name: "Graduated Alumni", criteria: { lifecycleStage: "Graduated" }, count: 2850 },
+    { id: "seg-age-4-6", name: "Age 4-6 Cohort", criteria: { ageMin: 4, ageMax: 6 }, count: 2410 },
+    { id: "seg-mumbai", name: "Mumbai Centres", criteria: { city: "Mumbai" }, count: 2568 },
+    { id: "seg-bengaluru", name: "Bengaluru Centres", criteria: { city: "Bengaluru" }, count: 1155 },
+    { id: "seg-discontinued-30", name: "Discontinued - Winback Target", criteria: { lifecycleStage: "Discontinued" }, count: 980 },
   ],
   exclusions: [
     { id: "ex-1", memberId: "MEM-0019", scope: "Global", reason: "Requested opt-out", createdAt: daysAgo(6) },
@@ -364,28 +499,39 @@ export const initialData = {
       edges: journeyEdges,
       baselineCompletion: 74,
     },
-    {
+    makeStarterJourney({
       id: "journey-cold-lead",
       name: "Cold Lead Nurture",
       status: "Draft",
       tag: "Cold Lead Journey",
-      modifiedAt: daysAgo(5),
-      trigger: { type: "Time-based", event: "Weekly lead nurture", reference: "L" },
-      nodes: [],
-      edges: [],
+      event: "New Trial Inquiry",
+      reference: "L",
+      modifiedDays: 5,
       baselineCompletion: 61,
-    },
-    starterJourney({
+      steps: [
+        { label: "Welcome & Demo Video", offset: 1, templateId: "tpl-welcome" },
+        { label: "Trainer Introduction", offset: 3, templateId: "tpl-trainer-intro" },
+        { label: "Counsellor Discovery Call", offset: 6, templateId: "tpl-call-checkin", isHuman: true },
+        { label: "Learning Resource Share", offset: 10, templateId: "tpl-progress-resource" },
+      ],
+    }),
+    makeStarterJourney({
       id: "journey-renewal",
       name: "Renewal Reminder Journey",
       status: "Active",
       tag: "Renewal Journey",
-      event: "Renewal Due",
+      event: "Renewal Due (30 Days Out)",
       reference: "R",
       modifiedDays: 3,
       baselineCompletion: 69,
+      steps: [
+        { label: "First Month Reflections", offset: 1, templateId: "tpl-parent-checkin" },
+        { label: "Personal Check-in Call", offset: 7, templateId: "tpl-call-checkin", isHuman: true },
+        { label: "Milestone Appreciation Gift", offset: 14, templateId: "tpl-gift-small", isHuman: true },
+        { label: "Annual Connection & Re-enrollment", offset: 21, templateId: "tpl-annual" },
+      ],
     }),
-    starterJourney({
+    makeStarterJourney({
       id: "journey-discontinued",
       name: "Discontinued Winback",
       status: "Paused",
@@ -394,8 +540,14 @@ export const initialData = {
       reference: "D",
       modifiedDays: 4,
       baselineCompletion: 48,
+      steps: [
+        { label: "Pause Promotional Updates", offset: 1, templateId: "tpl-discontinued-pause" },
+        { label: "Counsellor Feedback Call", offset: 4, templateId: "tpl-discontinued-call", isHuman: true },
+        { label: "Understand Reason Note", offset: 10, templateId: "tpl-discontinued-reason" },
+        { label: "Gentle Community Circle", offset: 25, templateId: "tpl-recovery-community" },
+      ],
     }),
-    starterJourney({
+    makeStarterJourney({
       id: "journey-graduate",
       name: "Graduate Alumni Loop",
       status: "Active",
@@ -404,8 +556,15 @@ export const initialData = {
       reference: "G",
       modifiedDays: 6,
       baselineCompletion: 76,
+      steps: [
+        { label: "Graduation Celebration Card", offset: 0, templateId: "tpl-grad-recognition" },
+        { label: "Alumni Resource Pack", offset: 7, templateId: "tpl-alumni-resources" },
+        { label: "Send Milestone Gift", offset: 20, templateId: "tpl-gift-small", isHuman: true },
+        { label: "Trainer & Community Connect", offset: 45, templateId: "tpl-community-trainer", isHuman: true },
+        { label: "Events & Referral Privilege", offset: 90, templateId: "tpl-events-referrals" },
+      ],
     }),
-    starterJourney({
+    makeStarterJourney({
       id: "journey-franchise",
       name: "Franchise Investor Lead",
       status: "Draft",
@@ -414,6 +573,11 @@ export const initialData = {
       reference: "F",
       modifiedDays: 8,
       baselineCompletion: 42,
+      steps: [
+        { label: "Welcome & Onboarding", offset: 1, templateId: "tpl-welcome" },
+        { label: "Counsellor Introductory Call", offset: 3, templateId: "tpl-call-checkin", isHuman: true },
+        { label: "Parent Check-in Dossier", offset: 7, templateId: "tpl-parent-checkin" },
+      ],
     }),
   ],
   journeyMembers: Array.from({ length: 38 }, (_, index) => ({
@@ -439,7 +603,7 @@ export const initialData = {
       journeyId: "journey-member",
       memberId: members[(index * 13 + 11) % members.length].id,
       stepId: task.stepId,
-      assignee: "Aarav Mehta",
+      assignee: "Ayush Rana",
       status: "Pending",
       dueContext: task.context,
       comment: "",

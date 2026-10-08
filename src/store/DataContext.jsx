@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { computeSegmentMembers, initialData } from "../data/mockData";
 
-const STORAGE_KEY = "tickle-right-jms-data-v1";
+const STORAGE_KEY = "tickle-right-jms-data-v7";
 const DataContext = createContext(null);
 
 const loadData = () => {
@@ -11,38 +11,23 @@ const loadData = () => {
     if (!parsed?.members || !parsed?.segments || !parsed?.templates || !parsed?.journeys) {
       return initialData;
     }
-    let upgraded = parsed;
-    if (parsed.members.length < initialData.members.length) {
-      upgraded = {
-        ...parsed,
-        members: initialData.members,
-        segments: parsed.segments.map((segment) => {
-          const seeded = initialData.segments.find((item) => item.id === segment.id);
-          return seeded ? { ...segment, count: seeded.count } : segment;
-        }),
-      };
-    }
-    upgraded = {
-      ...upgraded,
-      actionTasks:
-        upgraded.actionTasks.length < initialData.actionTasks.length
-          ? initialData.actionTasks
-          : upgraded.actionTasks,
-      journeys: upgraded.journeys.map((journey) =>
-        journey.id === "journey-member"
-          ? {
-              ...journey,
-              nodes: initialData.journeys[0].nodes,
-              edges: initialData.journeys[0].edges,
-            }
-          : journey
-      ),
+    // Upgrade journeys so all starter journeys have their horizontal nodes
+    const upgraded = {
+      ...parsed,
+      events: parsed.events || initialData.events,
+      members: initialData.members,
+      segments: initialData.segments,
+      actionTasks: initialData.actionTasks,
+      journeys: initialData.journeys.map((seedJourney) => {
+        const found = parsed.journeys?.find((j) => j.id === seedJourney.id);
+        if (!found || !found.nodes?.length) return seedJourney;
+        return {
+          ...found,
+          nodes: seedJourney.nodes,
+          edges: seedJourney.edges,
+        };
+      }),
     };
-    const existingJourneyIds = new Set(upgraded.journeys.map((journey) => journey.id));
-    const missingSeedJourneys = initialData.journeys.filter((journey) => !existingJourneyIds.has(journey.id));
-    if (missingSeedJourneys.length) {
-      upgraded = { ...upgraded, journeys: [...upgraded.journeys, ...missingSeedJourneys] };
-    }
     return upgraded;
   } catch {
     return initialData;
@@ -157,12 +142,74 @@ export function DataProvider({ children }) {
           ],
         }));
       },
+      removeExclusion(exclusionId) {
+        setData((current) => ({
+          ...current,
+          exclusions: current.exclusions.filter((item) => item.id !== exclusionId),
+        }));
+      },
+      removeSegment(segmentId) {
+        setData((current) => ({
+          ...current,
+          segments: current.segments.filter((item) => item.id !== segmentId),
+        }));
+      },
+      updateSegment(segmentId, patch) {
+        setData((current) => ({
+          ...current,
+          segments: current.segments.map((segment) =>
+            segment.id === segmentId
+              ? {
+                  ...segment,
+                  ...patch,
+                  count: patch.criteria
+                    ? Math.round(computeSegmentMembers(current.members, patch.criteria).length * (6420 / current.members.length))
+                    : segment.count,
+                }
+              : segment
+          ),
+        }));
+      },
+      deleteTemplate(templateId) {
+        setData((current) => ({
+          ...current,
+          templates: current.templates.filter((item) => item.id !== templateId),
+        }));
+      },
       updateTask(taskId, patch) {
         setData((current) => ({
           ...current,
           actionTasks: current.actionTasks.map((task) =>
             task.id === taskId ? { ...task, ...patch } : task
           ),
+        }));
+      },
+      addEvent(event) {
+        setData((current) => ({
+          ...current,
+          events: [
+            {
+              ...event,
+              id: event.id || `ev-${Date.now()}`,
+              linkedJourneys: event.linkedJourneys || [],
+              status: "Active",
+            },
+            ...current.events,
+          ],
+        }));
+      },
+      updateEvent(eventId, patch) {
+        setData((current) => ({
+          ...current,
+          events: current.events.map((ev) =>
+            ev.id === eventId ? { ...ev, ...patch } : ev
+          ),
+        }));
+      },
+      deleteEvent(eventId) {
+        setData((current) => ({
+          ...current,
+          events: current.events.filter((ev) => ev.id !== eventId),
         }));
       },
     }),
