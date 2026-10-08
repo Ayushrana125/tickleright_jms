@@ -559,115 +559,203 @@ export default function Analytics() {
       />
 
       {/* =========================================================================
-          VISUAL 1: HERO OMNICHANNEL RESPONSE RATES (4 Cards)
-          WhatsApp Reply %, Call Connect %, Email Access %, Milestone Kits %
+          VISUAL 1: HERO OMNICHANNEL & LIFECYCLE KPIS
+          Row 1: Omnichannel Parent Response Rates (WhatsApp, Calls, Email, Kits)
+          Row 2: Lifecycle Conversion & Growth Rates (Renewal %, Win-Back %, Referral %)
       ========================================================================= */}
-      <section className="mb-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* 💬 WhatsApp 2-Way Reply */}
-        <div className="panel rounded-2xl p-5">
-          <div className="flex items-center justify-between text-xs font-extrabold text-ink/70">
-            <span className="flex items-center gap-1.5 text-ink">
-              <MessageSquare size={15} className="text-coral-500" />
-              WhatsApp 2-Way Reply
-            </span>
-            <span className="text-[11px] font-mono text-ink/50">14,180 / 19,100</span>
+      <section className="mb-6 space-y-4">
+        {/* Row 1: Omnichannel Parent Response Rates */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* 💬 WhatsApp 2-Way Reply */}
+          <div className="panel rounded-2xl p-5">
+            <div className="flex items-center justify-between text-xs font-extrabold text-ink/70">
+              <span className="flex items-center gap-1.5 text-ink">
+                <MessageSquare size={15} className="text-coral-500" />
+                WhatsApp 2-Way Reply
+              </span>
+              <span className="text-[11px] font-mono text-ink/50">14,180 / 19,100</span>
+            </div>
+
+            <div className="mt-2.5 flex items-baseline gap-2">
+              <span className="text-3xl font-black tracking-tight text-ink tabular-nums">74.2%</span>
+              <span className="text-xs font-black text-coral-600 bg-coral-50 px-2 py-0.5 rounded-full border border-coral-100">
+                Optimal
+              </span>
+            </div>
+
+            <div className="mt-2.5 h-1.5 rounded-full bg-coral-50 overflow-hidden">
+              <div className="h-full rounded-full bg-coral-500" style={{ width: "74.2%" }} />
+            </div>
+
+            <div className="mt-3 flex items-center justify-between text-[11px] text-ink/60 font-bold border-t border-coral-100 pt-2">
+              <span>22m avg response latency</span>
+              <span className="text-ink font-extrabold">78% first-touch reply</span>
+            </div>
           </div>
 
-          <div className="mt-2.5 flex items-baseline gap-2">
-            <span className="text-3xl font-black tracking-tight text-ink tabular-nums">74.2%</span>
-            <span className="text-xs font-black text-coral-600 bg-coral-50 px-2 py-0.5 rounded-full border border-coral-100">
-              Optimal
-            </span>
+          {/* 📞 Counsellor Call Connect */}
+          <div className="panel rounded-2xl p-5">
+            <div className="flex items-center justify-between text-xs font-extrabold text-ink/70">
+              <span className="flex items-center gap-1.5 text-ink">
+                <Phone size={15} className="text-coral-500" />
+                Counsellor Call Pick-up
+              </span>
+              <span className="text-[11px] font-mono text-ink/50">4,890 / 6,140</span>
+            </div>
+
+            <div className="mt-2.5 flex items-baseline gap-2">
+              <span className="text-3xl font-black tracking-tight text-ink tabular-nums">79.6%</span>
+              <span className="text-xs font-black text-coral-600 bg-coral-50 px-2 py-0.5 rounded-full border border-coral-100">
+                Connected
+              </span>
+            </div>
+
+            <div className="mt-2.5 h-1.5 rounded-full bg-coral-50 overflow-hidden">
+              <div className="h-full rounded-full bg-coral-500" style={{ width: "79.6%" }} />
+            </div>
+
+            <div className="mt-3 flex items-center justify-between text-[11px] text-ink/60 font-bold border-t border-coral-100 pt-2">
+              <span>4.6m avg call duration</span>
+              <span className="text-ink font-extrabold">82% on 2 attempts</span>
+            </div>
           </div>
 
-          <div className="mt-2.5 h-1.5 rounded-full bg-coral-50 overflow-hidden">
-            <div className="h-full rounded-full bg-coral-500" style={{ width: "74.2%" }} />
+          {/* ✉️ Resources & Email Open */}
+          <div className="panel rounded-2xl p-5">
+            <div className="flex items-center justify-between text-xs font-extrabold text-ink/70">
+              <span className="flex items-center gap-1.5 text-ink">
+                <Mail size={15} className="text-coral-500" />
+                Resource & Email Open
+              </span>
+              <span className="text-[11px] font-mono text-ink/50">8,420 / 16,250</span>
+            </div>
+
+            <div className="mt-2.5 flex items-baseline gap-2">
+              <span className="text-3xl font-black tracking-tight text-ink tabular-nums">51.8%</span>
+              <span className="text-xs font-bold text-ink/70 bg-coral-50/60 px-2 py-0.5 rounded-full border border-coral-100">
+                Standard
+              </span>
+            </div>
+
+            <div className="mt-2.5 h-1.5 rounded-full bg-coral-50 overflow-hidden">
+              <div className="h-full rounded-full bg-coral-500" style={{ width: "51.8%" }} />
+            </div>
+
+            <div className="mt-3 flex items-center justify-between text-[11px] text-ink/60 font-bold border-t border-coral-100 pt-2">
+              <span>34% curriculum links clicked</span>
+              <span className="text-ink font-extrabold">68% on mobile</span>
+            </div>
           </div>
 
-          <div className="mt-3 flex items-center justify-between text-[11px] text-ink/60 font-bold border-t border-coral-100 pt-2">
-            <span>22m avg response latency</span>
-            <span className="text-ink font-extrabold">78% first-touch reply</span>
+          {/* 🎁 Milestone Physical Kits */}
+          <div className="panel rounded-2xl p-5">
+            <div className="flex items-center justify-between text-xs font-extrabold text-ink/70">
+              <span className="flex items-center gap-1.5 text-ink">
+                <Package size={15} className="text-coral-500" />
+                Milestone Physical Kits
+              </span>
+              <span className="text-[11px] font-mono text-ink/50">2,810 / 2,855</span>
+            </div>
+
+            <div className="mt-2.5 flex items-baseline gap-2">
+              <span className="text-3xl font-black tracking-tight text-ink tabular-nums">98.4%</span>
+              <span className="text-xs font-black text-coral-600 bg-coral-50 px-2 py-0.5 rounded-full border border-coral-100">
+                Verified
+              </span>
+            </div>
+
+            <div className="mt-2.5 h-1.5 rounded-full bg-coral-50 overflow-hidden">
+              <div className="h-full rounded-full bg-coral-500" style={{ width: "98.4%" }} />
+            </div>
+
+            <div className="mt-3 flex items-center justify-between text-[11px] text-ink/60 font-bold border-t border-coral-100 pt-2">
+              <span>99.2% on-time dispatch</span>
+              <span className="text-ink font-extrabold">88% photo shared on WA</span>
+            </div>
           </div>
         </div>
 
-        {/* 📞 Counsellor Call Connect */}
-        <div className="panel rounded-2xl p-5">
-          <div className="flex items-center justify-between text-xs font-extrabold text-ink/70">
-            <span className="flex items-center gap-1.5 text-ink">
-              <Phone size={15} className="text-coral-500" />
-              Counsellor Call Pick-up
-            </span>
-            <span className="text-[11px] font-mono text-ink/50">4,890 / 6,140</span>
+        {/* Row 2: Lifecycle Conversion & Growth Outcomes (Renewal %, Win-Back %, Referral %) */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* 🔄 Renewal Rate % */}
+          <div className="panel rounded-2xl p-5">
+            <div className="flex items-center justify-between text-xs font-extrabold text-ink/70">
+              <span className="flex items-center gap-1.5 text-ink">
+                <RotateCcw size={15} className="text-coral-500" />
+                Term Renewal Rate
+              </span>
+              <span className="text-[11px] font-mono text-ink/50">2,640 / 3,120</span>
+            </div>
+
+            <div className="mt-2.5 flex items-baseline gap-2">
+              <span className="text-3xl font-black tracking-tight text-ink tabular-nums">84.6%</span>
+              <span className="text-xs font-black text-coral-600 bg-coral-50 px-2 py-0.5 rounded-full border border-coral-100">
+                +4.6% vs Target
+              </span>
+            </div>
+
+            <div className="mt-2.5 h-1.5 rounded-full bg-coral-50 overflow-hidden">
+              <div className="h-full rounded-full bg-coral-500" style={{ width: "84.6%" }} />
+            </div>
+
+            <div className="mt-3 flex items-center justify-between text-[11px] text-ink/60 font-bold border-t border-coral-100 pt-2">
+              <span>91% retained within 14 days</span>
+              <span className="text-ink font-extrabold">Avg Term: ₹34,500</span>
+            </div>
           </div>
 
-          <div className="mt-2.5 flex items-baseline gap-2">
-            <span className="text-3xl font-black tracking-tight text-ink tabular-nums">79.6%</span>
-            <span className="text-xs font-black text-coral-600 bg-coral-50 px-2 py-0.5 rounded-full border border-coral-100">
-              Connected
-            </span>
+          {/* 🎯 Win Back % */}
+          <div className="panel rounded-2xl p-5">
+            <div className="flex items-center justify-between text-xs font-extrabold text-ink/70">
+              <span className="flex items-center gap-1.5 text-ink">
+                <UserCheck size={15} className="text-coral-500" />
+                Discontinued Win-Back Rate
+              </span>
+              <span className="text-[11px] font-mono text-ink/50">259 / 980</span>
+            </div>
+
+            <div className="mt-2.5 flex items-baseline gap-2">
+              <span className="text-3xl font-black tracking-tight text-ink tabular-nums">26.4%</span>
+              <span className="text-xs font-black text-coral-600 bg-coral-50 px-2 py-0.5 rounded-full border border-coral-100">
+                Recovered
+              </span>
+            </div>
+
+            <div className="mt-2.5 h-1.5 rounded-full bg-coral-50 overflow-hidden">
+              <div className="h-full rounded-full bg-coral-500" style={{ width: "26.4%" }} />
+            </div>
+
+            <div className="mt-3 flex items-center justify-between text-[11px] text-ink/60 font-bold border-t border-coral-100 pt-2">
+              <span>42d avg re-activation cycle</span>
+              <span className="text-ink font-extrabold">Top: Vacation Batch</span>
+            </div>
           </div>
 
-          <div className="mt-2.5 h-1.5 rounded-full bg-coral-50 overflow-hidden">
-            <div className="h-full rounded-full bg-coral-500" style={{ width: "79.6%" }} />
-          </div>
+          {/* 👥 Referral Rate % */}
+          <div className="panel rounded-2xl p-5">
+            <div className="flex items-center justify-between text-xs font-extrabold text-ink/70">
+              <span className="flex items-center gap-1.5 text-ink">
+                <Users size={15} className="text-coral-500" />
+                Parent Referral Rate
+              </span>
+              <span className="text-[11px] font-mono text-ink/50">2,106 / 6,420</span>
+            </div>
 
-          <div className="mt-3 flex items-center justify-between text-[11px] text-ink/60 font-bold border-t border-coral-100 pt-2">
-            <span>4.6m avg call duration</span>
-            <span className="text-ink font-extrabold">82% on 2 attempts</span>
-          </div>
-        </div>
+            <div className="mt-2.5 flex items-baseline gap-2">
+              <span className="text-3xl font-black tracking-tight text-ink tabular-nums">32.8%</span>
+              <span className="text-xs font-black text-coral-600 bg-coral-50 px-2 py-0.5 rounded-full border border-coral-100">
+                High Advocacy
+              </span>
+            </div>
 
-        {/* ✉️ Resources & Email Open */}
-        <div className="panel rounded-2xl p-5">
-          <div className="flex items-center justify-between text-xs font-extrabold text-ink/70">
-            <span className="flex items-center gap-1.5 text-ink">
-              <Mail size={15} className="text-coral-500" />
-              Resource & Email Open
-            </span>
-            <span className="text-[11px] font-mono text-ink/50">8,420 / 16,250</span>
-          </div>
+            <div className="mt-2.5 h-1.5 rounded-full bg-coral-50 overflow-hidden">
+              <div className="h-full rounded-full bg-coral-500" style={{ width: "32.8%" }} />
+            </div>
 
-          <div className="mt-2.5 flex items-baseline gap-2">
-            <span className="text-3xl font-black tracking-tight text-ink tabular-nums">51.8%</span>
-            <span className="text-xs font-bold text-ink/70 bg-coral-50/60 px-2 py-0.5 rounded-full border border-coral-100">
-              Standard
-            </span>
-          </div>
-
-          <div className="mt-2.5 h-1.5 rounded-full bg-coral-50 overflow-hidden">
-            <div className="h-full rounded-full bg-coral-500" style={{ width: "51.8%" }} />
-          </div>
-
-          <div className="mt-3 flex items-center justify-between text-[11px] text-ink/60 font-bold border-t border-coral-100 pt-2">
-            <span>34% curriculum links clicked</span>
-            <span className="text-ink font-extrabold">68% on mobile</span>
-          </div>
-        </div>
-
-        {/* 🎁 Milestone Physical Kits */}
-        <div className="panel rounded-2xl p-5">
-          <div className="flex items-center justify-between text-xs font-extrabold text-ink/70">
-            <span className="flex items-center gap-1.5 text-ink">
-              <Package size={15} className="text-coral-500" />
-              Milestone Physical Kits
-            </span>
-            <span className="text-[11px] font-mono text-ink/50">2,810 / 2,855</span>
-          </div>
-
-          <div className="mt-2.5 flex items-baseline gap-2">
-            <span className="text-3xl font-black tracking-tight text-ink tabular-nums">98.4%</span>
-            <span className="text-xs font-black text-coral-600 bg-coral-50 px-2 py-0.5 rounded-full border border-coral-100">
-              Verified
-            </span>
-          </div>
-
-          <div className="mt-2.5 h-1.5 rounded-full bg-coral-50 overflow-hidden">
-            <div className="h-full rounded-full bg-coral-500" style={{ width: "98.4%" }} />
-          </div>
-
-          <div className="mt-3 flex items-center justify-between text-[11px] text-ink/60 font-bold border-t border-coral-100 pt-2">
-            <span>99.2% on-time dispatch</span>
-            <span className="text-ink font-extrabold">88% photo shared on WA</span>
+            <div className="mt-3 flex items-center justify-between text-[11px] text-ink/60 font-bold border-t border-coral-100 pt-2">
+              <span>1.4 referrals per active family</span>
+              <span className="text-ink font-extrabold">70% Alumni Loop share</span>
+            </div>
           </div>
         </div>
       </section>
