@@ -1,5 +1,7 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import {
+  Activity,
   AlertTriangle,
   ArrowRight,
   BarChart2,
@@ -74,6 +76,326 @@ const centreScorecard = [
   { centre: "Indiranagar", region: "Bengaluru", families: 760, replyRate: 79, callConnect: 76, slaHours: "3.2h", status: "Stable" },
   { centre: "Koregaon Park", region: "Pune", families: 520, replyRate: 62, callConnect: 58, slaHours: "6.4h", status: "At-Risk" },
 ];
+
+function MemberDistributionCard({ journey, dataJourneys }) {
+  const [hoverIndex, setHoverIndex] = useState(null);
+  const containerRef = useRef(null);
+
+  const rawJourney = dataJourneys?.find((j) => j.id === journey.id) || dataJourneys?.[0];
+  const nodes = rawJourney?.nodes || [];
+  const stepCount = Math.max(nodes.length, 18);
+  const total = journey.families || 6420;
+
+  // Determine spikes for this journey matching the visual in screenshot 2
+  const { steps, spikeIndices } = useMemo(() => {
+    let spikes = [];
+    if (journey.id === "journey-member") {
+      spikes = [
+        { index: 1, ratio: 0.45 }, // Step 2 (Orientation & Welcome)
+        { index: 9, ratio: 0.28 }, // Step 10 (100-Day Milestone)
+      ];
+    } else if (journey.id === "journey-cold-lead") {
+      spikes = [
+        { index: 0, ratio: 0.65 },
+        { index: 1, ratio: 0.22 },
+      ];
+    } else if (journey.id === "journey-renewal") {
+      spikes = [
+        { index: 2, ratio: 0.72 },
+      ];
+    } else if (journey.id === "journey-discontinued") {
+      spikes = [
+        { index: 1, ratio: 0.70 },
+      ];
+    } else if (journey.id === "journey-graduate") {
+      spikes = [
+        { index: 0, ratio: 0.62 },
+        { index: 3, ratio: 0.24 },
+      ];
+    } else if (journey.id === "journey-franchise") {
+      spikes = [
+        { index: 0, ratio: 0.75 },
+      ];
+    } else {
+      spikes = [
+        { index: 1, ratio: 0.45 },
+        { index: Math.floor(stepCount / 2), ratio: 0.28 },
+      ];
+    }
+
+    const spikeSum = spikes.reduce((sum, s) => sum + s.ratio, 0);
+    const remainingRatio = Math.max(0.04, 1 - spikeSum);
+    const nonSpikeCount = Math.max(1, stepCount - spikes.length);
+    const baselineRatio = remainingRatio / nonSpikeCount;
+
+    const list = [];
+    for (let i = 0; i < stepCount; i++) {
+      const node = nodes[i];
+      const spike = spikes.find((s) => s.index === i);
+      const ratio = spike ? spike.ratio : baselineRatio;
+      const count = Math.round(total * ratio);
+      const label =
+        node?.data?.label ||
+        (i === 0 ? "Start Orientation" : i === 9 ? "Mid-Term Milestone" : `Step ${i + 1}`);
+
+      list.push({
+        stepNumber: i + 1,
+        label,
+        count,
+        pct: Math.round(ratio * 100),
+        isSpike: Boolean(spike),
+      });
+    }
+    return { steps: list, spikeIndices: spikes };
+  }, [journey.id, nodes, stepCount, total]);
+
+  const svgWidth = 360;
+  const svgHeight = 40;
+  const baselineY = 30;
+  const maxSpikeHeight = 24;
+
+  const { areaPath, linePath, stepCoords } = useMemo(() => {
+    const padding = 14;
+    const usableWidth = svgWidth - 2 * padding;
+
+    const coords = steps.map((s, i) => {
+      const x = padding + (i / Math.max(1, stepCount - 1)) * usableWidth;
+      return { ...s, x, stepIdx: i };
+    });
+
+    const stepGap = usableWidth / Math.max(1, stepCount - 1);
+    const sigma = Math.max(7.5, stepGap * 0.48);
+    const maxRatio = Math.max(...spikeIndices.map((s) => s.ratio), 0.5);
+
+    const sampleCount = 110;
+    const sampled = [];
+    for (let j = 0; j <= sampleCount; j++) {
+      const x = (j / sampleCount) * svgWidth;
+      let peakOffset = 0;
+
+      spikeIndices.forEach((spike) => {
+        const spikeX =
+          coords[spike.index]?.x ??
+          padding + (spike.index / Math.max(1, stepCount - 1)) * usableWidth;
+        const dist = x - spikeX;
+        const gauss = Math.exp(-(dist * dist) / (2 * sigma * sigma));
+        peakOffset += (spike.ratio / maxRatio) * maxSpikeHeight * gauss;
+      });
+
+      const y = Math.max(7, baselineY - peakOffset);
+      sampled.push({ x, y });
+    }
+
+    let line = `M ${sampled[0].x.toFixed(1)} ${sampled[0].y.toFixed(1)}`;
+    for (let j = 1; j < sampled.length; j++) {
+      line += ` L ${sampled[j].x.toFixed(1)} ${sampled[j].y.toFixed(1)}`;
+    }
+    const area = `${line} L ${svgWidth} ${baselineY} L 0 ${baselineY} Z`;
+
+    return { areaPath: area, linePath: line, stepCoords: coords };
+  }, [steps, stepCount, spikeIndices]);
+
+  const handleMouseMove = (e) => {
+    if (!containerRef.current || !stepCoords.length) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const mouseX = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
+    const targetSvgX = (mouseX / rect.width) * svgWidth;
+
+    let closestIdx = 0;
+    let minDiff = 9999;
+    stepCoords.forEach((s, idx) => {
+      const diff = Math.abs(s.x - targetSvgX);
+      if (diff < minDiff) {
+        minDiff = diff;
+        closestIdx = idx;
+      }
+    });
+    setHoverIndex(closestIdx);
+  };
+
+  const activeStep = hoverIndex !== null ? stepCoords[hoverIndex] : null;
+  const gradId = `subtle-grad-analytics-${journey.id}`;
+
+  return (
+    <div className="panel rounded-3xl p-5 text-left transition hover:ring-2 hover:ring-coral-300 hover:shadow-lg">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <div className="text-lg font-black text-slate-800">{journey.name}</div>
+          <div className="mt-0.5 text-xs font-bold text-slate-400">{journey.tag}</div>
+        </div>
+        <span className="rounded-full px-2.5 py-0.5 text-xs font-black bg-emerald-50 text-emerald-700">
+          {rawJourney?.status || "Active"}
+        </span>
+      </div>
+
+      <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+        <div className="rounded-2xl bg-coral-50/80 p-3 border border-coral-100">
+          <div className="text-2xl font-black text-coral-600">
+            {journey.families.toLocaleString()}
+          </div>
+          <div className="text-[11px] font-extrabold text-slate-500">enrolled base</div>
+        </div>
+        <div className="rounded-2xl bg-sky-50/80 p-3 border border-sky-100">
+          <div className="text-2xl font-black text-sky-700">{stepCount}</div>
+          <div className="text-[11px] font-extrabold text-slate-500">journey steps</div>
+        </div>
+      </div>
+
+      {/* Member Distribution Wave */}
+      <div className="mt-4 border-t border-slate-100 pt-3 relative select-none">
+        <div className="flex items-center justify-between text-[11px] font-bold text-slate-400">
+          <span className="flex items-center gap-1.5">
+            <Activity size={13} className="text-slate-400" />
+            <span>Member Distribution</span>
+          </span>
+          <span className="text-[11px] font-semibold text-slate-400">
+            {stepCount} Steps
+          </span>
+        </div>
+
+        <div
+          ref={containerRef}
+          onMouseMove={handleMouseMove}
+          onMouseLeave={() => setHoverIndex(null)}
+          className="relative mt-2 h-11 w-full cursor-pointer"
+        >
+          <svg
+            viewBox={`0 0 ${svgWidth} ${svgHeight}`}
+            preserveAspectRatio="none"
+            className="h-full w-full overflow-visible"
+          >
+            <defs>
+              <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#f43f5e" stopOpacity="0.18" />
+                <stop offset="70%" stopColor="#fb7185" stopOpacity="0.04" />
+                <stop offset="100%" stopColor="#fb7185" stopOpacity="0.0" />
+              </linearGradient>
+            </defs>
+
+            {/* Baseline axis rule */}
+            <line
+              x1="0"
+              y1={baselineY}
+              x2={svgWidth}
+              y2={baselineY}
+              stroke="#e2e8f0"
+              strokeWidth="1"
+            />
+
+            {/* Step tick markers on the baseline */}
+            {stepCoords.map((s, idx) => {
+              const isHovered = hoverIndex === idx;
+              return (
+                <line
+                  key={`tick-${idx}`}
+                  x1={s.x}
+                  y1={baselineY - 2}
+                  x2={s.x}
+                  y2={baselineY + 3}
+                  stroke={isHovered ? "#e11d48" : s.isSpike ? "#fda4af" : "#cbd5e1"}
+                  strokeWidth={isHovered ? 1.5 : 1}
+                />
+              );
+            })}
+
+            {/* Faint subtle area fill */}
+            {areaPath && <path d={areaPath} fill={`url(#${gradId})`} />}
+
+            {/* Soft curve line */}
+            {linePath && (
+              <path
+                d={linePath}
+                fill="none"
+                stroke="#fda4af"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="transition-colors hover:stroke-rose-400"
+              />
+            )}
+
+            {/* Spike indicator dots */}
+            {stepCoords.map((s, idx) => {
+              if (!s.isSpike && hoverIndex !== idx) return null;
+              return (
+                <circle
+                  key={`dot-${idx}`}
+                  cx={s.x}
+                  cy={s.isSpike ? 9 : baselineY}
+                  r={hoverIndex === idx ? 3.5 : 2.5}
+                  className={hoverIndex === idx ? "fill-rose-600" : "fill-rose-400"}
+                />
+              );
+            })}
+          </svg>
+
+          {/* Interactive Tooltip & Scrubber Line on Hover */}
+          {activeStep && (
+            <>
+              <div
+                className="absolute top-0 bottom-1 w-[1px] bg-rose-400/80 pointer-events-none"
+                style={{ left: `${(activeStep.x / svgWidth) * 100}%` }}
+              />
+              <div
+                className="absolute h-2.5 w-2.5 -ml-[5px] -mt-[5px] rounded-full bg-white border-2 border-rose-600 shadow-xs pointer-events-none"
+                style={{
+                  left: `${(activeStep.x / svgWidth) * 100}%`,
+                  top: activeStep.isSpike ? "22%" : "70%",
+                }}
+              />
+              <div
+                className="absolute bottom-full mb-1.5 -translate-x-1/2 rounded-lg bg-slate-900/90 text-white px-2.5 py-1 text-[11px] shadow-lg pointer-events-none z-30 whitespace-nowrap border border-slate-700/50"
+                style={{
+                  left: `${Math.max(16, Math.min(84, (activeStep.x / svgWidth) * 100))}%`,
+                }}
+              >
+                <div className="font-bold text-slate-300">
+                  Step {activeStep.stepNumber}:{" "}
+                  <span className="text-white font-extrabold">{activeStep.label}</span>
+                </div>
+                <div className="text-coral-300 font-black text-[10px] mt-0.5">
+                  {activeStep.count.toLocaleString()} members ({activeStep.pct}%)
+                  {activeStep.isSpike && (
+                    <span className="ml-1 text-amber-300 font-extrabold">• High Traction</span>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Axis markers (1, 10, 18) */}
+        <div className="relative mt-1.5 h-3.5 w-full text-[9px] font-bold text-slate-400 select-none">
+          <span
+            style={{ left: `${(stepCoords[0].x / svgWidth) * 100}%` }}
+            className="absolute -translate-x-1/2"
+          >
+            1
+          </span>
+          <span
+            style={{ left: `${(stepCoords[Math.floor(stepCount / 2)].x / svgWidth) * 100}%` }}
+            className="absolute -translate-x-1/2 text-slate-400"
+          >
+            {Math.floor(stepCount / 2) + 1}
+          </span>
+          <span
+            style={{ left: `${(stepCoords[stepCount - 1].x / svgWidth) * 100}%` }}
+            className="absolute -translate-x-1/2"
+          >
+            {stepCount}
+          </span>
+        </div>
+      </div>
+
+      <div className="mt-4 flex items-center justify-between text-xs font-bold text-slate-400 border-t border-slate-100 pt-3">
+        <span>Updated {rawJourney?.modifiedAt || "2026-10-08"}</span>
+        <Link to="/journey" className="text-coral-600 font-extrabold hover:underline">
+          Open Visual Canvas →
+        </Link>
+      </div>
+    </div>
+  );
+}
 
 export default function Analytics() {
   const { data } = useData();
@@ -888,162 +1210,167 @@ export default function Analytics() {
           </div>
         </div>
 
-        {/* Right Column: Visual 3 - Step-by-Step Touchpoint Response Wave (Day-wise Chart + Table) */}
-        <div className="xl:col-span-7 panel rounded-2xl p-6">
-          <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-coral-100">
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-base font-black text-ink">
-                  {activeJourney.name} — Touchpoint Response Wave
-                </h2>
-                <span className="rounded-full bg-coral-50 px-2 py-0.5 text-[10px] font-black text-coral-600 border border-coral-200">
-                  {activeJourney.steps.length} Touchpoints
-                </span>
+        {/* Right Column: Visual 3 (Response Wave) + Member Distribution Card */}
+        <div className="xl:col-span-7 space-y-6">
+          <div className="panel rounded-2xl p-6">
+            <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-coral-100">
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-base font-black text-ink">
+                    {activeJourney.name} — Touchpoint Response Wave
+                  </h2>
+                  <span className="rounded-full bg-coral-50 px-2 py-0.5 text-[10px] font-black text-coral-600 border border-coral-200">
+                    {activeJourney.steps.length} Touchpoints
+                  </span>
+                </div>
+                <p className="text-xs font-semibold text-ink/60 mt-0.5">
+                  Day-wise progression showing touchpoints sent (Sky Soft) vs parent replies & call pick-ups (Coral).
+                </p>
               </div>
-              <p className="text-xs font-semibold text-ink/60 mt-0.5">
-                Day-wise progression showing touchpoints sent (Sky Soft) vs parent replies & call pick-ups (Coral).
-              </p>
-            </div>
 
-            {/* Channel Filter Pills */}
-            <div className="flex items-center gap-1 bg-coral-50/60 p-1 rounded-xl border border-coral-100 text-xs font-extrabold">
-              {["All", "WhatsApp", "Call", "Email", "Gift"].map((ch) => (
-                <button
-                  key={ch}
-                  type="button"
-                  onClick={() => setSelectedChannelFilter(ch)}
-                  className={`rounded-lg px-2.5 py-1 text-[11px] transition ${
-                    selectedChannelFilter === ch
-                      ? "bg-coral-500 text-white shadow-2xs"
-                      : "text-ink/70 hover:text-ink hover:bg-white"
-                  }`}
-                >
-                  {ch}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Day-Wise Response Wave Bar Chart */}
-          <div className="mt-4">
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={dayWiseChartData}
-                  margin={{ top: 10, right: 10, left: -10, bottom: 25 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f4d1d9" vertical={false} />
-                  <XAxis
-                    dataKey="name"
-                    tick={{ fontSize: 10, fontWeight: 800, fill: BRAND.ink }}
-                    interval={0}
-                    angle={-15}
-                    textAnchor="end"
-                    height={45}
-                  />
-                  <YAxis
-                    tickFormatter={(val) => val.toLocaleString()}
-                    tick={{ fontSize: 10, fontWeight: 700, fill: BRAND.ink }}
-                  />
-                  <Tooltip
-                    formatter={(value, name) => [
-                      `${value.toLocaleString()} Families`,
-                      name === "sent" ? "Touchpoints Sent" : "Parent Replies / Pick-ups",
-                    ]}
-                    labelFormatter={(label, payload) =>
-                      payload?.[0]?.payload?.fullTitle || label
-                    }
-                    contentStyle={{
-                      backgroundColor: "#ffffff",
-                      borderRadius: "12px",
-                      border: `1px solid ${BRAND.panelBorder}`,
-                      boxShadow: "0 10px 25px rgba(48,49,61,0.08)",
-                      fontSize: "12px",
-                      fontWeight: 700,
-                    }}
-                  />
-                  <Legend
-                    verticalAlign="top"
-                    align="right"
-                    wrapperStyle={{ fontSize: "11px", fontWeight: 800, paddingBottom: "10px" }}
-                  />
-                  <Bar
-                    dataKey="sent"
-                    fill={BRAND.skysoft}
-                    radius={[5, 5, 0, 0]}
-                    name="Touchpoints Sent"
-                  />
-                  <Bar
-                    dataKey="responded"
-                    fill={BRAND.coral}
-                    radius={[5, 5, 0, 0]}
-                    name="Parent Replies / Pick-ups"
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-
-          {/* Chronological Step-by-Step Breakdown Table */}
-          <div className="mt-5 border border-coral-100 rounded-xl overflow-hidden divide-y divide-coral-100">
-            <div className="grid grid-cols-[75px_1fr_135px_120px] bg-coral-50/40 px-3.5 py-2 text-[11px] font-black text-ink">
-              <span>Day</span>
-              <span>Milestone & Purpose</span>
-              <span>Volume & Latency</span>
-              <span className="text-right">Response Rate</span>
-            </div>
-
-            <div className="divide-y divide-coral-100 bg-white max-h-[300px] overflow-auto">
-              {filteredSteps.map((step) => {
-                const isUnderperforming = step.rate < 45;
-
-                return (
-                  <div
-                    key={step.title}
-                    className="grid grid-cols-[75px_1fr_135px_120px] items-center px-3.5 py-2.5 text-xs hover:bg-coral-50/20 transition"
+              {/* Channel Filter Pills */}
+              <div className="flex items-center gap-1 bg-coral-50/60 p-1 rounded-xl border border-coral-100 text-xs font-extrabold">
+                {["All", "WhatsApp", "Call", "Email", "Gift"].map((ch) => (
+                  <button
+                    key={ch}
+                    type="button"
+                    onClick={() => setSelectedChannelFilter(ch)}
+                    className={`rounded-lg px-2.5 py-1 text-[11px] transition ${
+                      selectedChannelFilter === ch
+                        ? "bg-coral-500 text-white shadow-2xs"
+                        : "text-ink/70 hover:text-ink hover:bg-white"
+                    }`}
                   >
-                    <span className="font-mono text-[11px] font-black text-ink/80">{step.day}</span>
+                    {ch}
+                  </button>
+                ))}
+              </div>
+            </div>
 
-                    <div className="pr-3">
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-black text-ink">{step.title}</span>
-                        <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full border border-coral-100 bg-coral-50 text-coral-600">
-                          {step.channel}
-                        </span>
-                      </div>
-                      <div className="text-[10px] font-medium text-ink/60 mt-0.5">{step.detail}</div>
-                    </div>
+            {/* Day-Wise Response Wave Bar Chart */}
+            <div className="mt-4">
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={dayWiseChartData}
+                    margin={{ top: 10, right: 10, left: -10, bottom: 25 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f4d1d9" vertical={false} />
+                    <XAxis
+                      dataKey="name"
+                      tick={{ fontSize: 10, fontWeight: 800, fill: BRAND.ink }}
+                      interval={0}
+                      angle={-15}
+                      textAnchor="end"
+                      height={45}
+                    />
+                    <YAxis
+                      tickFormatter={(val) => val.toLocaleString()}
+                      tick={{ fontSize: 10, fontWeight: 700, fill: BRAND.ink }}
+                    />
+                    <Tooltip
+                      formatter={(value, name) => [
+                        `${value.toLocaleString()} Families`,
+                        name === "sent" ? "Touchpoints Sent" : "Parent Replies / Pick-ups",
+                      ]}
+                      labelFormatter={(label, payload) =>
+                        payload?.[0]?.payload?.fullTitle || label
+                      }
+                      contentStyle={{
+                        backgroundColor: "#ffffff",
+                        borderRadius: "12px",
+                        border: `1px solid ${BRAND.panelBorder}`,
+                        boxShadow: "0 10px 25px rgba(48,49,61,0.08)",
+                        fontSize: "12px",
+                        fontWeight: 700,
+                      }}
+                    />
+                    <Legend
+                      verticalAlign="top"
+                      align="right"
+                      wrapperStyle={{ fontSize: "11px", fontWeight: 800, paddingBottom: "10px" }}
+                    />
+                    <Bar
+                      dataKey="sent"
+                      fill={BRAND.skysoft}
+                      radius={[5, 5, 0, 0]}
+                      name="Touchpoints Sent"
+                    />
+                    <Bar
+                      dataKey="responded"
+                      fill={BRAND.coral}
+                      radius={[5, 5, 0, 0]}
+                      name="Parent Replies / Pick-ups"
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
 
-                    <div className="text-[11px] font-mono text-ink/80">
-                      <div className="font-bold">
-                        {step.responded.toLocaleString()} / {step.sent.toLocaleString()}
-                      </div>
-                      <div className="text-[9px] text-ink/50 font-sans font-medium">{step.latency}</div>
-                    </div>
+            {/* Chronological Step-by-Step Breakdown Table */}
+            <div className="mt-5 border border-coral-100 rounded-xl overflow-hidden divide-y divide-coral-100">
+              <div className="grid grid-cols-[75px_1fr_135px_120px] bg-coral-50/40 px-3.5 py-2 text-[11px] font-black text-ink">
+                <span>Day</span>
+                <span>Milestone & Purpose</span>
+                <span>Volume & Latency</span>
+                <span className="text-right">Response Rate</span>
+              </div>
 
-                    <div className="text-right">
-                      <div className="font-mono font-black text-ink">{step.rate}%</div>
-                      <div className="mt-1 h-1.5 w-full bg-coral-50 rounded-full overflow-hidden">
-                        <div
-                          className={`h-full rounded-full ${
-                            isUnderperforming ? "bg-[#c93b58]" : "bg-coral-500"
-                          }`}
-                          style={{ width: `${step.rate}%` }}
-                        />
+              <div className="divide-y divide-coral-100 bg-white max-h-[300px] overflow-auto">
+                {filteredSteps.map((step) => {
+                  const isUnderperforming = step.rate < 45;
+
+                  return (
+                    <div
+                      key={step.title}
+                      className="grid grid-cols-[75px_1fr_135px_120px] items-center px-3.5 py-2.5 text-xs hover:bg-coral-50/20 transition"
+                    >
+                      <span className="font-mono text-[11px] font-black text-ink/80">{step.day}</span>
+
+                      <div className="pr-3">
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-black text-ink">{step.title}</span>
+                          <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full border border-coral-100 bg-coral-50 text-coral-600">
+                            {step.channel}
+                          </span>
+                        </div>
+                        <div className="text-[10px] font-medium text-ink/60 mt-0.5">{step.detail}</div>
+                      </div>
+
+                      <div className="text-[11px] font-mono text-ink/80">
+                        <div className="font-bold">
+                          {step.responded.toLocaleString()} / {step.sent.toLocaleString()}
+                        </div>
+                        <div className="text-[9px] text-ink/50 font-sans font-medium">{step.latency}</div>
+                      </div>
+
+                      <div className="text-right">
+                        <div className="font-mono font-black text-ink">{step.rate}%</div>
+                        <div className="mt-1 h-1.5 w-full bg-coral-50 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full rounded-full ${
+                              isUnderperforming ? "bg-[#c93b58]" : "bg-coral-500"
+                            }`}
+                            style={{ width: `${step.rate}%` }}
+                          />
+                        </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="mt-3 flex items-center justify-between text-xs font-bold text-ink/60">
+              <span>
+                Showing {filteredSteps.length} of {activeJourney.steps.length} milestones
+              </span>
+              <span className="text-coral-600 font-extrabold">{activeJourney.transitionFlow}</span>
             </div>
           </div>
 
-          <div className="mt-3 flex items-center justify-between text-xs font-bold text-ink/60">
-            <span>
-              Showing {filteredSteps.length} of {activeJourney.steps.length} milestones
-            </span>
-            <span className="text-coral-600 font-extrabold">{activeJourney.transitionFlow}</span>
-          </div>
+          {/* Member Distribution Card (Matching Screenshot 2 to fill blank space) */}
+          <MemberDistributionCard journey={activeJourney} dataJourneys={data.journeys} />
         </div>
       </section>
 
