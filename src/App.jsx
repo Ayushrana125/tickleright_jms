@@ -11,10 +11,10 @@ import ActionQueue from "./pages/ActionQueue.jsx";
 import { useData } from "./store/DataContext.jsx";
 
 const nav = [
+  { to: "/journey", label: "Journey", icon: GitBranch },
   { to: "/audience", label: "Audience", icon: UsersRound },
   { to: "/events", label: "Events", icon: Zap },
   { to: "/templates", label: "Templates", icon: Blocks },
-  { to: "/journey", label: "Journey", icon: GitBranch },
   { to: "/actions", label: "Action Queue", icon: ClipboardList },
   { to: "/analytics", label: "Analytics", icon: BarChart3 },
 ];
@@ -101,13 +101,13 @@ export default function App() {
             <span className="text-[11px] font-black uppercase tracking-wider text-slate-400">Tickle Right</span>
             <span className="rounded-full bg-coral-50 px-2 py-0.5 text-[10px] font-black text-coral-600">Enterprise</span>
           </div>
-          <div className="rounded-2xl bg-white p-2 border border-coral-100 shadow-xs flex items-center justify-center">
+          <NavLink to="/journey" className="rounded-2xl bg-white p-2 border border-coral-100 shadow-xs flex items-center justify-center transition hover:ring-2 hover:ring-coral-200">
             <img
               src={logoImg}
               alt="JMS • Journey Management System"
               className="w-full h-auto max-h-16 object-contain"
             />
-          </div>
+          </NavLink>
         </div>
         <nav className="space-y-1">
           {nav.map(({ to, label, icon: Icon }) => (
