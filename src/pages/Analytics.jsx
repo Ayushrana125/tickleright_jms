@@ -1210,8 +1210,12 @@ export default function Analytics() {
           </div>
         </div>
 
-        {/* Right Column: Visual 3 (Response Wave) + Member Distribution Card */}
+        {/* Right Column: Member Distribution Card (Above) + Visual 3 Touchpoint Response Wave */}
         <div className="xl:col-span-7 space-y-6">
+          {/* Member Distribution Card (Positioned Above) */}
+          <MemberDistributionCard journey={activeJourney} dataJourneys={data.journeys} />
+
+          {/* Visual 3: Step-by-Step Touchpoint Response Wave */}
           <div className="panel rounded-2xl p-6">
             <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-coral-100">
               <div>
@@ -1368,9 +1372,6 @@ export default function Analytics() {
               <span className="text-coral-600 font-extrabold">{activeJourney.transitionFlow}</span>
             </div>
           </div>
-
-          {/* Member Distribution Card (Matching Screenshot 2 to fill blank space) */}
-          <MemberDistributionCard journey={activeJourney} dataJourneys={data.journeys} />
         </div>
       </section>
 
