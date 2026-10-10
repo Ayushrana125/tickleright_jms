@@ -16,6 +16,7 @@ import {
   ArrowLeft,
   ArrowRight,
   Bell,
+  BookOpen,
   Calendar,
   CheckCircle2,
   ClipboardList,
@@ -51,6 +52,8 @@ import {
 } from "lucide-react";
 import ChannelBadge from "../components/ChannelBadge.jsx";
 import PageHeader from "../components/PageHeader.jsx";
+import WhyTickleTrailModal from "../components/WhyTickleTrailModal.jsx";
+import TickleTrailGuideModal from "../components/TickleTrailGuideModal.jsx";
 import { useData } from "../store/DataContext.jsx";
 
 const metricLabels = [
@@ -844,6 +847,8 @@ export default function Journey() {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [selectedNodeId, setSelectedNodeId] = useState("start");
+  const [showWhyModal, setShowWhyModal] = useState(false);
+  const [showGuideModal, setShowGuideModal] = useState(false);
   const nodesRef = useRef([]);
   const edgesRef = useRef([]);
   const pastStackRef = useRef([]);
@@ -1919,7 +1924,33 @@ export default function Journey() {
         <PageHeader
           title="Autopilot Journeys"
           subtitle="Design, automate, and orchestrate parent lifecycles. Set rules once and let autopilot handle omnichannel execution."
-          actions={<button className="btn btn-primary" onClick={createJourney}><Plus size={17} /> New Journey</button>}
+          actions={
+            <div className="flex items-center gap-2.5">
+              <button
+                type="button"
+                onClick={() => setShowWhyModal(true)}
+                className="btn btn-secondary !bg-white hover:!bg-coral-50 hover:!border-coral-300 hover:!text-coral-700 !border-slate-200 !text-slate-700 font-black flex items-center gap-1.5 shadow-2xs"
+                title="Discover why TickleTrail was built and our institutional philosophy"
+              >
+                <Sparkles size={15} className="text-coral-500" />
+                Why TickleTrail?
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowGuideModal(true)}
+                className="btn btn-secondary !bg-white hover:!bg-indigo-50 hover:!border-indigo-300 hover:!text-indigo-700 !border-slate-200 !text-slate-700 font-black flex items-center gap-1.5 shadow-2xs"
+                title="How each module works and quickstart setup guide"
+              >
+                <BookOpen size={15} className="text-indigo-600" />
+                TickleTrail Guide
+              </button>
+
+              <button className="btn btn-primary font-black" onClick={createJourney}>
+                <Plus size={17} /> New Journey
+              </button>
+            </div>
+          }
         />
         <div className="grid grid-cols-3 gap-5">
           {data.journeys.map((journey) => (
@@ -1963,6 +1994,10 @@ export default function Journey() {
             </div>
           ))}
         </div>
+
+        {/* Global Explainer Modals */}
+        <WhyTickleTrailModal isOpen={showWhyModal} onClose={() => setShowWhyModal(false)} />
+        <TickleTrailGuideModal isOpen={showGuideModal} onClose={() => setShowGuideModal(false)} />
       </div>
     );
   }
@@ -2052,6 +2087,14 @@ export default function Journey() {
                 </div>
               )}
             </div>
+            <button
+              type="button"
+              className="btn btn-ghost !px-2.5 text-xs font-bold"
+              onClick={() => setShowGuideModal(true)}
+              title="TickleTrail Guide & Setup"
+            >
+              <BookOpen size={16} /> Guide
+            </button>
             <button className="btn btn-ghost" onClick={saveGraph}><Save size={17} /> Save</button>
             <button
               className="btn btn-primary"
@@ -2145,6 +2188,10 @@ export default function Journey() {
           )}
         </aside>
       </div>
+
+      {/* Global Modals Accessible on Canvas */}
+      <WhyTickleTrailModal isOpen={showWhyModal} onClose={() => setShowWhyModal(false)} />
+      <TickleTrailGuideModal isOpen={showGuideModal} onClose={() => setShowGuideModal(false)} />
     </div>
   );
 }
