@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { computeSegmentMembers, initialData } from "../data/mockData";
 
-const STORAGE_KEY = "tickle-right-jms-data-v7";
+const STORAGE_KEY = "tickle-right-jms-data-v10";
 const DataContext = createContext(null);
 
 const loadData = () => {
@@ -11,24 +11,29 @@ const loadData = () => {
     if (!parsed?.members || !parsed?.segments || !parsed?.templates || !parsed?.journeys) {
       return initialData;
     }
-    // Upgrade journeys so all starter journeys have their horizontal nodes
-    const upgraded = {
+    // Always ensure all seed journeys from initialData are present and up to date
+    const savedJourneys = parsed.journeys || [];
+    const mergedJourneys = initialData.journeys.map((seedJourney) => {
+      const found = savedJourneys.find((j) => j.id === seedJourney.id);
+      if (!found || !found.nodes?.length) return seedJourney;
+      return {
+        ...seedJourney,
+        name: seedJourney.name,
+        tag: seedJourney.tag,
+        nodes: seedJourney.nodes,
+        edges: seedJourney.edges,
+        status: found.status || seedJourney.status,
+      };
+    });
+    return {
       ...parsed,
       events: parsed.events || initialData.events,
       members: initialData.members,
       segments: initialData.segments,
+      templates: initialData.templates,
       actionTasks: initialData.actionTasks,
-      journeys: initialData.journeys.map((seedJourney) => {
-        const found = parsed.journeys?.find((j) => j.id === seedJourney.id);
-        if (!found || !found.nodes?.length) return seedJourney;
-        return {
-          ...found,
-          nodes: seedJourney.nodes,
-          edges: seedJourney.edges,
-        };
-      }),
+      journeys: mergedJourneys,
     };
-    return upgraded;
   } catch {
     return initialData;
   }
