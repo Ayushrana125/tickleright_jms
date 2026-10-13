@@ -22,6 +22,8 @@ import {
   ClipboardList,
   Clock,
   Cog,
+  Download,
+  FileSpreadsheet,
   Gift,
   GitBranch,
   Image,
@@ -54,6 +56,8 @@ import ChannelBadge from "../components/ChannelBadge.jsx";
 import PageHeader from "../components/PageHeader.jsx";
 import WhyTickleTrailModal from "../components/WhyTickleTrailModal.jsx";
 import TickleTrailGuideModal from "../components/TickleTrailGuideModal.jsx";
+import ImportJourneyModal from "../components/ImportJourneyModal.jsx";
+import { downloadRowsAsExcel, journeyToRows } from "../utils/journeySpreadsheet.js";
 import { useData } from "../store/DataContext.jsx";
 
 const metricLabels = [
@@ -849,6 +853,25 @@ export default function Journey() {
   const [selectedNodeId, setSelectedNodeId] = useState("start");
   const [showWhyModal, setShowWhyModal] = useState(false);
   const [showGuideModal, setShowGuideModal] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importNotification, setImportNotification] = useState(null);
+
+  const handleImportSuccess = useCallback(
+    ({ type, journey, message }) => {
+      if (type === "new") {
+        addJourney(journey);
+      } else {
+        updateJourney(journey.id, journey);
+      }
+      setSelectedJourneyId(journey.id);
+      setImportNotification(message);
+      setTimeout(() => {
+        setImportNotification(null);
+      }, 7000);
+    },
+    [addJourney, updateJourney]
+  );
+
   const nodesRef = useRef([]);
   const edgesRef = useRef([]);
   const pastStackRef = useRef([]);
@@ -1921,6 +1944,22 @@ export default function Journey() {
   if (!selectedJourney) {
     return (
       <div className="page">
+        {importNotification && (
+          <div className="mb-4 flex items-center justify-between rounded-2xl border border-emerald-300 bg-emerald-50 px-4 py-3 text-xs font-black text-emerald-900 shadow-sm animate-in fade-in slide-in-from-top-2">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
+              <span>{importNotification}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setImportNotification(null)}
+              className="text-emerald-700 hover:text-emerald-950 font-bold p-1"
+            >
+              <X size={14} />
+            </button>
+          </div>
+        )}
+
         <PageHeader
           title="Autopilot Journeys"
           subtitle="Design, automate, and orchestrate parent lifecycles. Set rules once and let autopilot handle omnichannel execution."
@@ -1946,6 +1985,16 @@ export default function Journey() {
                 TickleTrail Guide
               </button>
 
+              <button
+                type="button"
+                onClick={() => setShowImportModal(true)}
+                className="btn btn-secondary !bg-white hover:!bg-emerald-50 hover:!border-emerald-300 hover:!text-emerald-700 !border-slate-200 !text-slate-700 font-black flex items-center gap-1.5 shadow-2xs"
+                title="Import or extend journey from Excel spreadsheet"
+              >
+                <FileSpreadsheet size={15} className="text-emerald-600" />
+                Import Journey
+              </button>
+
               <button className="btn btn-primary font-black" onClick={createJourney}>
                 <Plus size={17} /> New Journey
               </button>
@@ -1963,9 +2012,23 @@ export default function Journey() {
             >
               <div className="flex items-center justify-between gap-3">
                 <div className="text-lg font-black text-slate-800">{journey.name}</div>
-                <span className={`rounded-full px-2.5 py-0.5 text-xs font-black ${journey.status === "Active" ? "bg-emerald-50 text-emerald-700" : journey.status === "Draft" ? "bg-amber-50 text-amber-700" : "bg-slate-100 text-slate-600"}`}>
-                  {journey.status}
-                </span>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    title={`Export "${journey.name}" to Excel (.xlsx)`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const rows = journeyToRows(journey);
+                      downloadRowsAsExcel(rows, `TickleTrail_${journey.name.replace(/\s+/g, "_")}.xlsx`);
+                    }}
+                    className="grid h-6 w-6 place-items-center rounded-lg text-slate-400 hover:text-emerald-700 hover:bg-emerald-50 border border-transparent hover:border-emerald-200 transition"
+                  >
+                    <Download size={13} />
+                  </button>
+                  <span className={`rounded-full px-2.5 py-0.5 text-xs font-black ${journey.status === "Active" ? "bg-emerald-50 text-emerald-700" : journey.status === "Draft" ? "bg-amber-50 text-amber-700" : "bg-slate-100 text-slate-600"}`}>
+                    {journey.status}
+                  </span>
+                </div>
               </div>
               <div className="mt-1 text-xs font-bold text-slate-400">{journey.tag}</div>
               <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
@@ -1998,6 +2061,12 @@ export default function Journey() {
         {/* Global Explainer Modals */}
         <WhyTickleTrailModal isOpen={showWhyModal} onClose={() => setShowWhyModal(false)} />
         <TickleTrailGuideModal isOpen={showGuideModal} onClose={() => setShowGuideModal(false)} />
+        <ImportJourneyModal
+          isOpen={showImportModal}
+          onClose={() => setShowImportModal(false)}
+          journeys={data.journeys}
+          onImportSuccess={handleImportSuccess}
+        />
       </div>
     );
   }
@@ -2087,6 +2156,25 @@ export default function Journey() {
                 </div>
               )}
             </div>
+            <button
+              type="button"
+              className="btn btn-ghost !px-2.5 text-xs font-bold"
+              onClick={() => {
+                const rows = journeyToRows(selectedJourney);
+                downloadRowsAsExcel(rows, `TickleTrail_${selectedJourney.name.replace(/\s+/g, "_")}.xlsx`);
+              }}
+              title="Export this journey to Excel (.xlsx)"
+            >
+              <Download size={15} /> Export
+            </button>
+            <button
+              type="button"
+              className="btn btn-ghost !px-2.5 text-xs font-bold"
+              onClick={() => setShowImportModal(true)}
+              title="Import or extend journey from Excel"
+            >
+              <FileSpreadsheet size={15} /> Import
+            </button>
             <button
               type="button"
               className="btn btn-ghost !px-2.5 text-xs font-bold"
@@ -2192,6 +2280,12 @@ export default function Journey() {
       {/* Global Modals Accessible on Canvas */}
       <WhyTickleTrailModal isOpen={showWhyModal} onClose={() => setShowWhyModal(false)} />
       <TickleTrailGuideModal isOpen={showGuideModal} onClose={() => setShowGuideModal(false)} />
+      <ImportJourneyModal
+        isOpen={showImportModal}
+        onClose={() => setShowImportModal(false)}
+        journeys={data.journeys}
+        onImportSuccess={handleImportSuccess}
+      />
     </div>
   );
 }
