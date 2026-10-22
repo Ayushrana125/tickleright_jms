@@ -146,9 +146,9 @@ export default function Audience() {
       {/* ========================================================================= */}
       {/* COMPACT SEGMENTS CARD GRID WITH DIRECT EDIT OPTION */}
       {/* ========================================================================= */}
-      <div className="mb-6">
-        <div className="mb-2.5 flex items-center justify-between">
-          <div className="text-xs font-black uppercase tracking-wider text-slate-500">
+      <div className="mb-6 panel rounded-3xl p-5 shadow-sm">
+        <div className="mb-3.5 flex items-center justify-between border-b border-slate-100 pb-3">
+          <div className="text-xs font-black uppercase tracking-wider text-slate-700">
             Lifecycle Cohorts & Saved Segments ({data.segments.length})
           </div>
           <span className="text-xs font-bold text-slate-400">Click card to filter table • Click Edit to adjust rules</span>
@@ -186,10 +186,10 @@ export default function Audience() {
               <div
                 key={segment.id}
                 onClick={() => handleSelectSegment(segment.id)}
-                className={`group relative cursor-pointer rounded-2xl p-3.5 text-left transition hover:shadow-md hover:-translate-y-0.5 border ${
+                className={`group relative cursor-pointer rounded-2xl p-3.5 text-left transition hover:shadow-md hover:-translate-y-0.5 border-2 ${
                   isSelected
-                    ? "border-coral-500 bg-coral-50/30 ring-2 ring-coral-400/20 shadow-xs"
-                    : "border-slate-200/90 bg-white hover:border-coral-200 shadow-2xs"
+                    ? "border-coral-500 bg-coral-50 ring-2 ring-coral-400/20 shadow-sm"
+                    : "border-slate-100 bg-slate-50/70 hover:bg-white hover:border-coral-200 shadow-2xs"
                 }`}
               >
                 <div className="flex items-start justify-between gap-2">

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { NavLink, Route, Routes, Navigate, useNavigate } from "react-router-dom";
-import { BarChart3, Bell, Blocks, ClipboardList, ExternalLink, GitBranch, UsersRound, Zap } from "lucide-react";
+import { BarChart3, Bell, Blocks, ClipboardList, ExternalLink, GitBranch, LayoutDashboard, UsersRound, Zap } from "lucide-react";
 import logoImg from "./assets/tickle-trail-logo.png";
 import Audience from "./pages/Audience.jsx";
 import Events from "./pages/Events.jsx";
@@ -8,6 +8,7 @@ import Templates from "./pages/Templates.jsx";
 import Journey from "./pages/Journey.jsx";
 import Analytics from "./pages/Analytics.jsx";
 import ActionQueue from "./pages/ActionQueue.jsx";
+import MarketingOverviewReport from "./reports/marketing-overview/MarketingOverviewReport.jsx";
 import { useData } from "./store/DataContext.jsx";
 
 const nav = [
@@ -94,7 +95,18 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#fff9f4] text-ink">
+    <div className="min-h-screen bg-[#f8f7f5] text-ink relative">
+      {/* WhatsApp-style Doodle Pattern Background Layer */}
+      <div
+        className="fixed inset-0 pointer-events-none z-0 opacity-[0.1] mix-blend-multiply"
+        style={{
+          backgroundImage: "url('/Doodle%20Background.jpg')",
+          backgroundRepeat: "repeat",
+          backgroundSize: "1500px auto",
+        }}
+        aria-hidden="true"
+      />
+
       <aside className="fixed inset-y-0 left-0 z-20 flex w-64 flex-col border-r border-coral-100 bg-white/95 px-4 py-5 shadow-soft">
         <div className="mb-6 px-1">
           <div className="flex items-center justify-between mb-2 px-1">
@@ -137,9 +149,9 @@ export default function App() {
           </span>
         </div>
       </aside>
-      <main className="ml-64 min-h-screen flex flex-col">
+      <main className="ml-64 min-h-screen flex flex-col relative">
         {/* Global Top Bar */}
-        <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-coral-100/70 bg-[#fff9f4]/95 px-7 backdrop-blur-md">
+        <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-slate-100/80 bg-white/95 px-7 backdrop-blur-md">
           <div className="flex items-center gap-2.5 text-xs font-bold text-slate-500">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-black text-emerald-700 border border-emerald-200">
               <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
@@ -265,7 +277,7 @@ export default function App() {
           </div>
         </header>
 
-        <div className="flex-1">
+        <div className="flex-1 relative z-10">
           <Routes>
             <Route path="/" element={<Navigate to="/journey" replace />} />
             <Route path="/audience" element={<Audience />} />
@@ -274,6 +286,8 @@ export default function App() {
             <Route path="/journey" element={<Journey />} />
             <Route path="/actions" element={<ActionQueue />} />
             <Route path="/analytics" element={<Analytics />} />
+            <Route path="/report" element={<MarketingOverviewReport />} />
+            <Route path="/reports/marketing-overview" element={<MarketingOverviewReport />} />
           </Routes>
         </div>
       </main>
