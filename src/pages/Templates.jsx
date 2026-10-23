@@ -26,6 +26,7 @@ const blank = {
   content: "",
   stakeholderNotes: "",
   image: "",
+  deepLink: "",
 };
 
 const sampleReplacements = {
@@ -155,7 +156,7 @@ export default function Templates() {
         {/* Filter and Search Bar */}
         <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            {["All", "WhatsApp", "Email", "Call", "Gift"].map((ch) => {
+            {["All", "WhatsApp", "Email", "Call", "Gift", "App Notification"].map((ch) => {
               const count =
                 ch === "All"
                   ? data.templates.length
@@ -346,6 +347,8 @@ export default function Templates() {
                       contentType:
                         event.target.value === "Call" || event.target.value === "Gift"
                           ? "Instructions"
+                          : event.target.value === "App Notification"
+                          ? "Push Notification"
                           : "Text only",
                     })
                   }
@@ -354,6 +357,7 @@ export default function Templates() {
                   <option>Email</option>
                   <option>Call</option>
                   <option>Gift</option>
+                  <option>App Notification</option>
                 </select>
               </label>
 
@@ -371,6 +375,18 @@ export default function Templates() {
                 </label>
               )}
             </div>
+
+            {draft.channel === "App Notification" && (
+              <label className="block text-xs font-black uppercase tracking-wider text-slate-500">
+                In-App Destination (Deep Link URL)
+                <input
+                  className="field mt-1 text-sm font-bold font-mono text-indigo-700"
+                  placeholder="e.g. tr://activity/daily-spark or tr://stories/bedtime"
+                  value={draft.deepLink || ""}
+                  onChange={(event) => setDraft({ ...draft, deepLink: event.target.value })}
+                />
+              </label>
+            )}
 
             {/* Dynamic Tags Insertion Chips */}
             {!isHuman && (
@@ -476,6 +492,39 @@ export default function Templates() {
               Live Preview
             </span>
           </div>
+
+          {/* Realistic APP NOTIFICATION SIMULATION */}
+          {draft.channel === "App Notification" && (
+            <div className="rounded-3xl border border-indigo-200 bg-slate-900 p-5 shadow-xl text-white space-y-3">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="grid h-8 w-8 place-items-center rounded-xl bg-indigo-600 font-black text-white text-xs shadow-xs">
+                    TR
+                  </div>
+                  <div>
+                    <div className="text-xs font-black text-indigo-300">Tickle Right • App Push</div>
+                    <div className="text-[10px] font-semibold text-slate-400">Lock Screen Preview</div>
+                  </div>
+                </div>
+                <span className="text-[10px] font-bold text-slate-400">now</span>
+              </div>
+
+              <div className="rounded-2xl bg-slate-800/90 p-4 border border-slate-700/80 shadow-inner">
+                <div className="text-sm font-black text-white mb-1">
+                  {draft.name || "Daily Activity Spark"}
+                </div>
+                <div className="text-xs font-medium leading-relaxed text-slate-300 whitespace-pre-line">
+                  {renderedMessageText}
+                </div>
+                {draft.deepLink && (
+                  <div className="mt-3 pt-2.5 border-t border-slate-700/60 flex items-center justify-between text-[11px] text-indigo-400 font-bold">
+                    <span>Tap to open in app →</span>
+                    <span className="font-mono text-[10px] text-slate-400">{draft.deepLink}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Realistic WHATSAPP SIMULATION */}
           {draft.channel === "WhatsApp" && (

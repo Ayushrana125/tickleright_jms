@@ -5,84 +5,70 @@ export const SAMPLE_TEMPLATE_ROWS = [
   {
     "Day Number": 1,
     "Trigger Time": "09:00 AM",
-    "Time of Day": "morning",
     "Channel": "App Notification",
     "Message Title": "2-Min Game: The Disappearing Spoon",
     "Message Body": "Hide 1 dinner object under a napkin. Have your child close eyes and guess what went missing. Trains eidetic memory!",
     "Deep Link URL": "tr://activity/disappearing-spoon",
-    "Random Drop": "No",
     "Avoid Sundays": "Yes",
     "Festive Guard": "Yes",
   },
   {
     "Day Number": 1,
     "Trigger Time": "10:00 PM",
-    "Time of Day": "night",
     "Channel": "App Notification",
     "Message Title": "Bedtime Tale: The Whispering Cloud",
     "Message Body": "A soft 3-min audio adventure that gently guides theta brainwaves for restorative deep sleep.",
     "Deep Link URL": "tr://stories/whispering-cloud",
-    "Random Drop": "No",
     "Avoid Sundays": "Yes",
     "Festive Guard": "Yes",
   },
   {
     "Day Number": 2,
     "Trigger Time": "09:00 AM",
-    "Time of Day": "morning",
     "Channel": "Call",
     "Message Title": "Counsellor Check-in: 48-Hour Welcome",
     "Message Body": "Personal 5-minute call to ensure parent has set up the app and answer questions about the right-brain routine.",
     "Deep Link URL": "tr://counsellor/welcome-call",
-    "Random Drop": "No",
     "Avoid Sundays": "Yes",
     "Festive Guard": "Yes",
   },
   {
     "Day Number": 2,
     "Trigger Time": "10:00 PM",
-    "Time of Day": "night",
     "Channel": "App Notification",
     "Message Title": "Bedtime Tale: Oliver Owl’s Moonlit Glide",
     "Message Body": "Gentle forest rustles and deep breathing story to ease bedtime resistance.",
     "Deep Link URL": "tr://stories/oliver-owl",
-    "Random Drop": "No",
     "Avoid Sundays": "Yes",
     "Festive Guard": "Yes",
   },
   {
     "Day Number": 3,
     "Trigger Time": "09:00 AM",
-    "Time of Day": "morning",
     "Channel": "WhatsApp",
     "Message Title": "Parent Tip: Why 2 Minutes a Day Works",
     "Message Body": "Neuroplasticity in toddlers peaks during short daily bursts. Tap to read our 1-min pediatric right-brain guide.",
     "Deep Link URL": "tr://guides/neuro-bursts",
-    "Random Drop": "No",
     "Avoid Sundays": "Yes",
     "Festive Guard": "Yes",
   },
   {
     "Day Number": 3,
     "Trigger Time": "03:30 PM",
-    "Time of Day": "afternoon",
     "Channel": "App Notification",
     "Message Title": "Brain Byte: Toddler Memory Horizons",
     "Message Body": "Kids under 6 process imagery at 0.05 seconds. A quick flashcard game activates their photographic neural grid.",
     "Deep Link URL": "tr://nuggets/photographic-grid",
-    "Random Drop": "Yes",
     "Avoid Sundays": "Yes",
     "Festive Guard": "Yes",
   },
   {
     "Day Number": 3,
     "Trigger Time": "10:00 PM",
-    "Time of Day": "night",
     "Channel": "App Notification",
     "Message Title": "Bedtime Tale: The Little Star That Lost Its Hum",
     "Message Body": "Calming bedtime visualization to relax busy toddler minds before sleep.",
     "Deep Link URL": "tr://stories/humming-star",
-    "Random Drop": "No",
     "Avoid Sundays": "Yes",
     "Festive Guard": "Yes",
   },
@@ -104,12 +90,10 @@ export function journeyToRows(journey) {
         rows.push({
           "Day Number": dayNum,
           "Trigger Time": comm.time || "09:00 AM",
-          "Time of Day": comm.timeOfDay || (comm.time?.includes("10:") ? "night" : "morning"),
           "Channel": comm.channel || "App Notification",
           "Message Title": comm.title || "Daily Touchpoint",
           "Message Body": comm.desc || comm.content || "",
           "Deep Link URL": comm.deepLink || "tr://app",
-          "Random Drop": comm.isRandomDrop ? "Yes" : "No",
           "Avoid Sundays": node.data?.avoidSundays !== false ? "Yes" : "No",
           "Festive Guard": node.data?.checkFestivalCalendar !== false ? "Yes" : "No",
         });
@@ -119,12 +103,10 @@ export function journeyToRows(journey) {
       rows.push({
         "Day Number": dayNum,
         "Trigger Time": node.data?.triggerTime || "09:00 AM",
-        "Time of Day": "morning",
         "Channel": node.data?.template?.channel || (node.type === "human" ? "Call" : "App Notification"),
         "Message Title": node.data?.label || node.data?.template?.name || "Step Touchpoint",
         "Message Body": node.data?.description || node.data?.template?.content || "",
         "Deep Link URL": node.data?.deepLink || "tr://app",
-        "Random Drop": "No",
         "Avoid Sundays": node.data?.avoidSundays !== false ? "Yes" : "No",
         "Festive Guard": node.data?.checkFestivalCalendar !== false ? "Yes" : "No",
       });
@@ -150,12 +132,10 @@ export async function downloadRowsAsExcel(rows, filename = "TickleTrail_Journey.
     const columns = [
       { header: "Day Number", key: "day", width: 14 },
       { header: "Trigger Time", key: "time", width: 15 },
-      { header: "Time of Day", key: "timeOfDay", width: 15 },
       { header: "Channel", key: "channel", width: 20 },
       { header: "Message Title", key: "title", width: 34 },
       { header: "Message Body", key: "desc", width: 55 },
       { header: "Deep Link URL", key: "deepLink", width: 30 },
-      { header: "Random Drop", key: "isRandomDrop", width: 15 },
       { header: "Avoid Sundays", key: "avoidSundays", width: 15 },
       { header: "Festive Guard", key: "festiveGuard", width: 15 },
     ];
@@ -186,12 +166,10 @@ export async function downloadRowsAsExcel(rows, filename = "TickleTrail_Journey.
       const row = worksheet.addRow({
         day: r["Day Number"] ?? r.day,
         time: r["Trigger Time"] ?? r.time,
-        timeOfDay: r["Time of Day"] ?? r.timeOfDay,
         channel: r["Channel"] ?? r.channel,
         title: r["Message Title"] ?? r.title,
         desc: r["Message Body"] ?? r.desc,
         deepLink: r["Deep Link URL"] ?? r.deepLink,
-        isRandomDrop: r["Random Drop"] ?? (r.isRandomDrop ? "Yes" : "No"),
         avoidSundays: r["Avoid Sundays"] ?? (r.avoidSundays ? "Yes" : "No"),
         festiveGuard: r["Festive Guard"] ?? (r.checkFestivalCalendar ? "Yes" : "No"),
       });
@@ -282,14 +260,7 @@ export async function parseSpreadsheetFile(file) {
     const day = parseInt(rawDay, 10) || idx + 1;
 
     const rawTime = getVal("Trigger Time", "Time", "time", "trigger_time", "schedule_time");
-    const time = rawTime || "09:00 AM";
-
-    const rawTimeOfDay = getVal("Time of Day", "TimeOfDay", "time_of_day", "slot", "part_of_day").toLowerCase();
-    const timeOfDay = rawTimeOfDay.includes("night")
-      ? "night"
-      : rawTimeOfDay.includes("afternoon") || rawTimeOfDay.includes("mid")
-      ? "afternoon"
-      : "morning";
+    const time = rawTime || "10:00 AM";
 
     const rawChannel = getVal("Channel", "channel", "type", "channel_type");
     let channel = "App Notification";
@@ -303,10 +274,6 @@ export async function parseSpreadsheetFile(file) {
     const desc = getVal("Message Body", "Body", "body", "desc", "description", "content", "message") || "Right-brain development touchpoint.";
     const deepLink = getVal("Deep Link URL", "Deep Link", "deepLink", "link", "url", "deeplink") || "tr://app";
 
-    const isRandomDrop = ["yes", "true", "1", "y"].includes(
-      getVal("Random Drop", "Random", "isRandomDrop", "random_drop").toLowerCase()
-    );
-
     const avoidSundays = !["no", "false", "0", "n"].includes(
       getVal("Avoid Sundays", "AvoidSundays", "avoid_sundays").toLowerCase()
     );
@@ -318,12 +285,10 @@ export async function parseSpreadsheetFile(file) {
     return {
       day,
       time,
-      timeOfDay,
       channel,
       title,
       desc,
       deepLink,
-      isRandomDrop,
       avoidSundays,
       checkFestivalCalendar,
     };
@@ -398,12 +363,10 @@ export function buildGraphFromRows(rows, journeyId = `journey-${Date.now()}`, jo
           comms: dayComms.map((c, cIdx) => ({
             id: `c-d${dayNum}-${cIdx + 1}`,
             time: c.time,
-            timeOfDay: c.timeOfDay,
             channel: c.channel,
             title: c.title,
             desc: c.desc,
             deepLink: c.deepLink,
-            isRandomDrop: c.isRandomDrop,
           })),
           avoidSundays: dayComms.some((c) => c.avoidSundays),
           checkFestivalCalendar: dayComms.some((c) => c.checkFestivalCalendar),

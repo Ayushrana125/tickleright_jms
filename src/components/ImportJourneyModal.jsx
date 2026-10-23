@@ -118,12 +118,10 @@ export default function ImportJourneyModal({
       SAMPLE_TEMPLATE_ROWS.map((r) => ({
         day: Number(r["Day Number"]),
         time: r["Trigger Time"],
-        timeOfDay: r["Time of Day"],
         channel: r["Channel"],
         title: r["Message Title"],
         desc: r["Message Body"],
         deepLink: r["Deep Link URL"],
-        isRandomDrop: r["Random Drop"] === "Yes",
         avoidSundays: r["Avoid Sundays"] === "Yes",
         checkFestivalCalendar: r["Festive Guard"] === "Yes",
       }))

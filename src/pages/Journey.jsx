@@ -607,8 +607,6 @@ function StackedDayNodeShell({ data }) {
 
           <div className="space-y-2.5">
             {comms.map((comm, idx) => {
-              const isNight = comm.timeOfDay === "night";
-              const isAfternoon = comm.timeOfDay === "afternoon";
               const chStyle = getChannelCommStyle(comm.channel || "App Notification");
               return (
                 <div key={comm.id || idx} className="relative flex items-start gap-2.5 pl-6 group">
@@ -621,21 +619,10 @@ function StackedDayNodeShell({ data }) {
                   <div className={`flex-1 rounded-xl border p-2 transition shadow-2xs hover:shadow-xs ${chStyle.card}`}>
                     <div className="flex items-center justify-between gap-1 mb-1">
                       <span className="inline-flex items-center gap-1 text-[10px] font-black text-slate-700 bg-white px-1.5 py-0.5 rounded-md border border-slate-200/80 shadow-2xs">
-                        {isNight ? (
-                          <Moon size={11} className="text-indigo-600" />
-                        ) : isAfternoon ? (
-                          <Sparkles size={11} className="text-indigo-500" />
-                        ) : (
-                          <Sun size={11} className="text-amber-500" />
-                        )}
-                        {comm.time}
+                        <Clock size={11} className="text-slate-500" />
+                        {comm.time || "Scheduled"}
                       </span>
                       <div className="flex items-center gap-1">
-                        {comm.isRandomDrop && (
-                          <span className="text-[9px] font-black px-1.5 py-0.2 rounded-full bg-indigo-100 text-indigo-800 border border-indigo-200">
-                            Random
-                          </span>
-                        )}
                         <ChannelBadge channel={comm.channel || "App Notification"} className={chStyle.badge} />
                         <button
                           type="button"
@@ -1166,23 +1153,16 @@ export default function Journey() {
       let nextNodes;
       if (targetNode.type === "stackedDay") {
         const commCount = (targetNode.data.comms || []).length;
-        const defaultTimes = ["09:00 AM", "01:00 PM", "04:30 PM", "08:00 PM", "10:00 PM"];
-        const chosenTime = defaultTimes[commCount % defaultTimes.length] || "03:00 PM";
-        const timeOfDay = chosenTime.includes("09:00")
-          ? "morning"
-          : chosenTime.includes("10:00")
-          ? "night"
-          : "afternoon";
+        const defaultTimes = ["10:00 AM", "02:00 PM", "05:00 PM", "07:30 PM"];
+        const chosenTime = defaultTimes[commCount % defaultTimes.length] || "11:00 AM";
 
         const newComm = {
           id: `c-${Date.now()}`,
           time: chosenTime,
-          timeOfDay,
           channel: channelKey,
           title: `${channelKey} Touchpoint #${commCount + 1}`,
           desc: `Targeted ${channelKey.toLowerCase()} communication for Day ${targetNode.data.day || 1}.`,
           deepLink: "tr://activity/view",
-          isRandomDrop: false,
         };
 
         nextNodes = currentNodes.map((n) =>
@@ -1201,23 +1181,19 @@ export default function Journey() {
         const origChannel = targetNode.data.template?.channel || "WhatsApp";
         const existingComm = {
           id: `c-orig-${Date.now()}`,
-          time: "09:00 AM",
-          timeOfDay: "morning",
+          time: "10:00 AM",
           channel: origChannel,
           title: targetNode.data.label || `${origChannel} Update`,
-          desc: targetNode.data.template?.content?.slice(0, 90) || targetNode.data.description || "Primary morning touchpoint",
+          desc: targetNode.data.template?.content?.slice(0, 90) || targetNode.data.description || "Primary touchpoint",
           deepLink: "tr://app",
-          isRandomDrop: false,
         };
         const newStackedComm = {
           id: `c-stacked-${Date.now()}`,
-          time: "03:30 PM",
-          timeOfDay: "afternoon",
+          time: "04:00 PM",
           channel: channelKey,
           title: `${channelKey} Touchpoint #2`,
           desc: `Second daily drop for Day ${dayNum}.`,
           deepLink: "tr://activity/view",
-          isRandomDrop: false,
         };
 
         nextNodes = currentNodes.map((n) =>
@@ -2386,23 +2362,16 @@ function StackedDayPanel({ node, onChange }) {
 
   const addComm = () => {
     const commCount = comms.length;
-    const defaultTimes = ["09:00 AM", "01:00 PM", "04:30 PM", "08:00 PM", "10:00 PM"];
-    const chosenTime = defaultTimes[commCount % defaultTimes.length] || "03:00 PM";
-    const timeOfDay = chosenTime.includes("09:00")
-      ? "morning"
-      : chosenTime.includes("10:00")
-      ? "night"
-      : "afternoon";
+    const defaultTimes = ["10:00 AM", "02:00 PM", "05:00 PM", "07:30 PM"];
+    const chosenTime = defaultTimes[commCount % defaultTimes.length] || "11:00 AM";
 
     const newComm = {
       id: `d${day}-c${Date.now()}`,
       time: chosenTime,
-      timeOfDay,
       channel: "App Notification",
       title: "New Daily Spark",
       desc: "Quick 2-minute prompt for the child and parent.",
       deepLink: "tr://activity/new",
-      isRandomDrop: false,
     };
     onChange({ comms: [...comms, newComm] });
     setActiveCommIdx(comms.length);
@@ -2508,14 +2477,8 @@ function StackedDayPanel({ node, onChange }) {
                   isActive ? chStyle.tabActive : chStyle.tabInactive
                 }`}
               >
-                {comm.timeOfDay === "night" ? (
-                  <Moon size={11} />
-                ) : comm.timeOfDay === "afternoon" ? (
-                  <Sparkles size={11} />
-                ) : (
-                  <Sun size={11} />
-                )}
-                {comm.time}
+                <Clock size={11} />
+                {comm.time || `Drop ${idx + 1}`}
                 {comm.channel && (
                   <span className={`text-[9px] ${isActive ? "opacity-90" : "font-extrabold"}`}>
                     • {comm.channel === "App Notification" ? "App" : comm.channel}
@@ -2550,35 +2513,11 @@ function StackedDayPanel({ node, onChange }) {
                 Trigger Time
                 <input
                   type="text"
+                  placeholder="e.g. 10:00 AM or 04:30 PM"
                   className="field mt-1 text-xs font-bold"
-                  value={activeComm.time || "09:00 AM"}
+                  value={activeComm.time || ""}
                   onChange={(e) => updateComm(activeCommIdx, { time: e.target.value })}
                 />
-              </label>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2">
-              <label className="block text-xs font-black uppercase text-slate-500">
-                Time of Day
-                <select
-                  className="field mt-1 text-xs font-bold"
-                  value={activeComm.timeOfDay || "morning"}
-                  onChange={(e) => updateComm(activeCommIdx, { timeOfDay: e.target.value })}
-                >
-                  <option value="morning">Morning (09:00 AM)</option>
-                  <option value="afternoon">Afternoon / Random</option>
-                  <option value="night">Night (10:00 PM)</option>
-                </select>
-              </label>
-
-              <label className="flex items-center gap-2 cursor-pointer bg-indigo-50/60 p-2 rounded-xl border border-indigo-200 text-xs font-extrabold text-indigo-900 mt-4">
-                <input
-                  type="checkbox"
-                  className="accent-indigo-600"
-                  checked={Boolean(activeComm.isRandomDrop)}
-                  onChange={(e) => updateComm(activeCommIdx, { isRandomDrop: e.target.checked })}
-                />
-                Random Drop
               </label>
             </div>
 
@@ -2742,7 +2681,7 @@ function NodePanel({ node, events, templates, segments, members, addTemplate, up
                 : "text-slate-500 hover:text-slate-800"
             }`}
           >
-            ⚙️ Timing & Safety
+            ⏱ Schedule
           </button>
           <button
             type="button"
@@ -2753,7 +2692,7 @@ function NodePanel({ node, events, templates, segments, members, addTemplate, up
                 : "text-slate-500 hover:text-slate-800"
             }`}
           >
-            📱 Copy & Preview
+            📩 Communication
           </button>
         </div>
       )}
@@ -2897,7 +2836,7 @@ function NodePanel({ node, events, templates, segments, members, addTemplate, up
                 <>
                   <div className="grid grid-cols-2 gap-2">
                     <label className="block text-xs font-black uppercase text-slate-500">
-                      Offset
+                      Send After
                       <input
                         className="field mt-1 text-xs font-bold"
                         type="number"
@@ -2975,12 +2914,12 @@ function NodePanel({ node, events, templates, segments, members, addTemplate, up
         </section>
       )}
 
-      {/* TAB 2: Message Copy & In-Context Preview */}
+      {/* TAB 2: Message & In-Context Preview */}
       {nodeSubTab === "content" && isTemplateNode && (
         <section className="space-y-4">
           <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
             <div className="mb-3 flex items-center justify-between gap-2">
-              <span className="text-base font-black text-slate-800">Blueprint Copy</span>
+              <span className="text-base font-black text-slate-800">Message</span>
               <button
                 type="button"
                 className="btn btn-ghost !px-2 !py-1 text-xs text-coral-600"
@@ -2990,84 +2929,114 @@ function NodePanel({ node, events, templates, segments, members, addTemplate, up
               </button>
             </div>
 
-            <label className="block text-xs font-black uppercase text-slate-500 mb-3">
-              Attached Template
-              <select
-                className="field mt-1 text-xs font-bold"
-                value={node.data.templateId || ""}
-                onChange={(event) => onChange({ templateId: event.target.value })}
-              >
-                {templates.map((template) => (
-                  <option key={template.id} value={template.id}>
-                    {template.name} ({template.channel})
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            {selectedTemplate && (
-              <div className="space-y-3 border-t border-slate-100 pt-3">
-                <div className="grid grid-cols-2 gap-2">
-                  <label className="block text-xs font-black uppercase text-slate-500">
-                    Channel
-                    <select
-                      className="field mt-1 text-xs font-bold"
-                      value={selectedTemplate.channel}
-                      onChange={(event) => {
-                        const channel = event.target.value;
+            {/* Primary: message content fields — always visible first */}
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-2">
+                <label className="block text-xs font-black uppercase text-slate-500">
+                  Channel
+                  <select
+                    className="field mt-1 text-xs font-bold"
+                    value={selectedTemplate?.channel || "WhatsApp"}
+                    onChange={(event) => {
+                      const channel = event.target.value;
+                      if (selectedTemplate) {
                         updateTemplate(selectedTemplate.id, {
                           channel,
-                          contentType: channel === "Call" || channel === "Gift" ? "Instructions" : "Text only",
+                          contentType:
+                            channel === "Call" || channel === "Gift"
+                              ? "Instructions"
+                              : channel === "App Notification"
+                              ? "Push Notification"
+                              : "Text only",
                         });
-                      }}
-                    >
-                      <option>WhatsApp</option>
-                      <option>Email</option>
-                      <option>Call</option>
-                      <option>Gift</option>
-                    </select>
-                  </label>
-
-                  {!isHumanTemplate && (
-                    <label className="block text-xs font-black uppercase text-slate-500">
-                      Content Type
-                      <select
-                        className="field mt-1 text-xs font-bold"
-                        value={selectedTemplate.contentType}
-                        onChange={(event) =>
-                          updateTemplate(selectedTemplate.id, { contentType: event.target.value })
-                        }
-                      >
-                        <option>Text only</option>
-                        <option>Image + Text</option>
-                      </select>
-                    </label>
-                  )}
-                </div>
-
-                <label className="block text-xs font-black uppercase text-slate-500">
-                  {isHumanTemplate ? "SOP Script" : "Message Body"}
-                  <textarea
-                    className="field mt-1 min-h-24 text-xs font-medium leading-relaxed"
-                    value={selectedTemplate.content || ""}
-                    onChange={(event) => updateTemplate(selectedTemplate.id, { content: event.target.value })}
-                  />
+                      }
+                    }}
+                  >
+                    <option>WhatsApp</option>
+                    <option>Email</option>
+                    <option>Call</option>
+                    <option>Gift</option>
+                    <option>App Notification</option>
+                  </select>
                 </label>
 
-                {isHumanTemplate && (
+                {!isHumanTemplate && (
                   <label className="block text-xs font-black uppercase text-slate-500">
-                    Counsellor SOP Notes
-                    <textarea
-                      className="field mt-1 min-h-16 text-xs"
-                      value={selectedTemplate.stakeholderNotes || ""}
-                      onChange={(event) =>
-                        updateTemplate(selectedTemplate.id, { stakeholderNotes: event.target.value })
-                      }
-                    />
+                    Content Type
+                    <select
+                      className="field mt-1 text-xs font-bold"
+                      value={selectedTemplate?.contentType || "Text only"}
+                      onChange={(event) => {
+                        if (selectedTemplate) {
+                          updateTemplate(selectedTemplate.id, { contentType: event.target.value });
+                        }
+                      }}
+                    >
+                      <option>Text only</option>
+                      <option>Image + Text</option>
+                    </select>
                   </label>
                 )}
               </div>
-            )}
+
+              <label className="block text-xs font-black uppercase text-slate-500">
+                {isHumanTemplate ? "SOP Script" : "Message Body"}
+                <textarea
+                  className="field mt-1 min-h-24 text-xs font-medium leading-relaxed"
+                  value={selectedTemplate?.content || ""}
+                  onChange={(event) => {
+                    if (selectedTemplate) updateTemplate(selectedTemplate.id, { content: event.target.value });
+                  }}
+                />
+              </label>
+
+              {isHumanTemplate && (
+                <label className="block text-xs font-black uppercase text-slate-500">
+                  Counsellor SOP Notes
+                  <textarea
+                    className="field mt-1 min-h-16 text-xs"
+                    value={selectedTemplate?.stakeholderNotes || ""}
+                    onChange={(event) => {
+                      if (selectedTemplate) updateTemplate(selectedTemplate.id, { stakeholderNotes: event.target.value });
+                    }}
+                  />
+                </label>
+              )}
+
+              {selectedTemplate?.channel === "App Notification" && (
+                <label className="block text-xs font-black uppercase text-slate-500">
+                  In-App Destination (Deep Link URL)
+                  <input
+                    type="text"
+                    className="field mt-1 text-xs font-mono font-medium text-indigo-700"
+                    placeholder="e.g. tr://activity/daily-spark or tr://stories/bedtime"
+                    value={selectedTemplate?.deepLink || ""}
+                    onChange={(event) => {
+                      if (selectedTemplate) updateTemplate(selectedTemplate.id, { deepLink: event.target.value });
+                    }}
+                  />
+                </label>
+              )}
+            </div>
+
+            {/* Secondary: template library linkage — clearly visible but not the lead */}
+            <div className="mt-4 pt-3 border-t border-slate-100">
+              <label className="block text-xs font-black uppercase text-slate-500">
+                Saved as Template
+                <select
+                  className="field mt-1 text-xs font-bold"
+                  value={node.data.templateId || ""}
+                  onChange={(event) => onChange({ templateId: event.target.value })}
+                >
+                  <option value="">— select existing template —</option>
+                  {templates.map((template) => (
+                    <option key={template.id} value={template.id}>
+                      {template.name} ({template.channel})
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
           </div>
 
           {/* In-Context Channel Simulation Card */}
@@ -3080,16 +3049,34 @@ function NodePanel({ node, events, templates, segments, members, addTemplate, up
                 <ChannelBadge channel={selectedTemplate.channel} />
               </div>
 
-              <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-xs">
-                {selectedTemplate.image && (
-                  <div className="mb-2 flex items-center gap-1.5 rounded-lg bg-coral-50 p-1.5 text-xs font-bold text-coral-600">
-                    <Image size={13} /> {selectedTemplate.image}
+              {selectedTemplate.channel === "App Notification" ? (
+                <div className="rounded-xl border border-slate-700 bg-slate-900 p-3.5 shadow-sm text-white">
+                  <div className="flex items-center justify-between text-[10px] text-slate-400 mb-1.5">
+                    <span className="font-bold text-indigo-300">TR • Push Notification</span>
+                    <span>now</span>
                   </div>
-                )}
-                <div className="text-xs font-semibold leading-relaxed text-slate-700 whitespace-pre-line">
-                  {renderHighlightedMessage(selectedTemplate.content)}
+                  <div className="text-xs font-black text-white">{selectedTemplate.name}</div>
+                  <div className="text-[11px] font-medium leading-relaxed text-slate-300 whitespace-pre-line mt-1">
+                    {renderHighlightedMessage(selectedTemplate.content)}
+                  </div>
+                  {selectedTemplate.deepLink && (
+                    <div className="mt-2.5 pt-2 border-t border-slate-800 text-[10px] text-indigo-400 font-mono">
+                      Tap → {selectedTemplate.deepLink}
+                    </div>
+                  )}
                 </div>
-              </div>
+              ) : (
+                <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-xs">
+                  {selectedTemplate.image && (
+                    <div className="mb-2 flex items-center gap-1.5 rounded-lg bg-coral-50 p-1.5 text-xs font-bold text-coral-600">
+                      <Image size={13} /> {selectedTemplate.image}
+                    </div>
+                  )}
+                  <div className="text-xs font-semibold leading-relaxed text-slate-700 whitespace-pre-line">
+                    {renderHighlightedMessage(selectedTemplate.content)}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </section>

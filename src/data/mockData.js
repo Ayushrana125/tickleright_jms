@@ -51,7 +51,37 @@ const makeMembers = () =>
   });
 
 export const seededTemplates = [
+    {
+    id: "tpl-app-activity-spark",
+    name: "Daily Activity Spark (Push)",
+    channel: "App Notification",
+    contentType: "Push Notification",
+    content: "Today's Right-Brain Spark: Spend 2 minutes with {{child_name}} on visual memory training!",
+    variables: ["child_name"],
+    deepLink: "tr://activity/daily-spark",
+    lastEdited: daysAgo(1),
+  },
   {
+    id: "tpl-app-bedtime-story",
+    name: "Bedtime Audio Adventure (Push)",
+    channel: "App Notification",
+    contentType: "Push Notification",
+    content: "Wind down with tonight's calming tale: Moon's Blanket. Tap to start audio for {{child_name}}.",
+    variables: ["child_name"],
+    deepLink: "tr://stories/moons-blanket",
+    lastEdited: daysAgo(2),
+  },
+  {
+    id: "tpl-app-habit-badge",
+    name: "Milestone Celebration (Push)",
+    channel: "App Notification",
+    contentType: "Push Notification",
+    content: "Milestone Unlocked! {{child_name}} just earned the 7-Day Consistency Badge.",
+    variables: ["child_name"],
+    deepLink: "tr://badges/consistency",
+    lastEdited: daysAgo(3),
+  },
+{
     id: "tpl-welcome",
     name: "Welcome & Onboarding",
     channel: "WhatsApp",
@@ -255,7 +285,6 @@ export const appJourneyDayNodes = [
       {
         id: "d1-am",
         time: "09:00 AM",
-        timeOfDay: "morning",
         channel: "App Notification",
         title: "2-Min Game: The Disappearing Spoon",
         desc: "Hide 1 dinner object under a napkin. Have your child close eyes and guess what went missing. Trains eidetic memory!",
@@ -264,7 +293,6 @@ export const appJourneyDayNodes = [
       {
         id: "d1-pm",
         time: "10:00 PM",
-        timeOfDay: "night",
         channel: "App Notification",
         title: "Bedtime Tale: The Whispering Cloud",
         desc: "A soft 3-min audio adventure that gently guides active toddlers into deep rest and vivid imagination.",
@@ -279,7 +307,6 @@ export const appJourneyDayNodes = [
       {
         id: "d2-am",
         time: "09:00 AM",
-        timeOfDay: "morning",
         channel: "App Notification",
         title: "2-Min Game: Color Radar",
         desc: "Look around the room: 'Find 3 things brighter than a lemon!' Rapid visual scanning and vocabulary drill.",
@@ -288,7 +315,6 @@ export const appJourneyDayNodes = [
       {
         id: "d2-pm",
         time: "10:00 PM",
-        timeOfDay: "night",
         channel: "App Notification",
         title: "Bedtime Tale: Oliver Owl’s Moonlit Glide",
         desc: "Gentle forest rustles and deep breathing story to ease bedtime resistance.",
@@ -303,7 +329,6 @@ export const appJourneyDayNodes = [
       {
         id: "d3-am",
         time: "09:00 AM",
-        timeOfDay: "morning",
         channel: "App Notification",
         title: "2-Min Game: Rhythm Echo",
         desc: "Tap a 3-beat rhythm on the table. Let your child mirror it back. Stimulates right-brain auditory sync.",
@@ -312,8 +337,6 @@ export const appJourneyDayNodes = [
       {
         id: "d3-mid",
         time: "03:30 PM",
-        timeOfDay: "afternoon",
-        isRandomDrop: true,
         channel: "App Notification",
         title: "Brain Byte: Why Toddlers Think in Snapshots",
         desc: "Kids under 6 process imagery at 0.05 seconds. A 20-second read on how their brain absorbs visual flashcards.",
@@ -322,7 +345,6 @@ export const appJourneyDayNodes = [
       {
         id: "d3-pm",
         time: "10:00 PM",
-        timeOfDay: "night",
         channel: "App Notification",
         title: "Bedtime Tale: The Little Star That Learned to Rest",
         desc: "Calming bedtime visualization to relax busy minds.",
@@ -337,7 +359,6 @@ export const appJourneyDayNodes = [
       {
         id: "d4-am",
         time: "09:00 AM",
-        timeOfDay: "morning",
         channel: "App Notification",
         title: "2-Min Game: Animal Pose Freeze",
         desc: "Call out 'Flamingo!' or 'Koala!' and hold a balance pose for 5 seconds. Builds vestibular body awareness.",
@@ -346,7 +367,6 @@ export const appJourneyDayNodes = [
       {
         id: "d4-pm",
         time: "10:00 PM",
-        timeOfDay: "night",
         channel: "App Notification",
         title: "Bedtime Tale: Leo the Lion Finds His Soft Voice",
         desc: "A soothing audio journey into quiet confidence.",
@@ -361,7 +381,6 @@ export const appJourneyDayNodes = [
       {
         id: "d5-am",
         time: "09:00 AM",
-        timeOfDay: "morning",
         channel: "App Notification",
         title: "2-Min Game: Mystery Pillowcase",
         desc: "Place 2 familiar toys in a cloth pouch. Let them feel with hands only and guess. Tactile memory training.",
@@ -370,7 +389,6 @@ export const appJourneyDayNodes = [
       {
         id: "d5-pm",
         time: "10:00 PM",
-        timeOfDay: "night",
         channel: "App Notification",
         title: "Bedtime Tale: The Sleepy Boat on Silver Lake",
         desc: "Rhythmic waves audio story for peaceful slumber.",
@@ -385,7 +403,6 @@ export const appJourneyDayNodes = [
       {
         id: "d6-am",
         time: "09:00 AM",
-        timeOfDay: "morning",
         channel: "App Notification",
         title: "2-Min Game: Flash Glance",
         desc: "Open a book page for 3 seconds, close it, and name two things on the page. High-speed recall drill.",
@@ -394,8 +411,6 @@ export const appJourneyDayNodes = [
       {
         id: "d6-mid",
         time: "11:15 AM",
-        timeOfDay: "afternoon",
-        isRandomDrop: true,
         channel: "App Notification",
         title: "Weekend DIY: 2-Ingredient Cloud Dough",
         desc: "Just flour and baby oil! A quick sensory texture play idea for Saturday morning.",
@@ -404,7 +419,6 @@ export const appJourneyDayNodes = [
       {
         id: "d6-pm",
         time: "10:00 PM",
-        timeOfDay: "night",
         channel: "App Notification",
         title: "Bedtime Tale: The Dream Balloon",
         desc: "Float across starry skies to end the week in comfort.",
@@ -419,7 +433,6 @@ export const appJourneyDayNodes = [
       {
         id: "d7-am",
         time: "09:00 AM",
-        timeOfDay: "morning",
         channel: "App Notification",
         title: "2-Min Game: Silly Mirror Faces",
         desc: "Make a goofy surprised or proud face; let them mirror it. Emotion recognition and right-brain empathy.",
@@ -428,7 +441,6 @@ export const appJourneyDayNodes = [
       {
         id: "d7-pm",
         time: "10:00 PM",
-        timeOfDay: "night",
         channel: "App Notification",
         title: "Bedtime Tale: The Forest Sloth's Slow Day",
         desc: "A tranquil story celebrating unhurried rest and deep peace.",
@@ -443,7 +455,6 @@ export const appJourneyDayNodes = [
       {
         id: "d8-am",
         time: "09:00 AM",
-        timeOfDay: "morning",
         channel: "App Notification",
         title: "2-Min Game: Sound Detective",
         desc: "Close eyes in the kitchen: 'Is that a spoon clinking, water tap, or paper rustling?' Auditory discrimination.",
@@ -452,7 +463,6 @@ export const appJourneyDayNodes = [
       {
         id: "d8-pm",
         time: "10:00 PM",
-        timeOfDay: "night",
         channel: "App Notification",
         title: "Bedtime Tale: The Firefly That Lit the Night",
         desc: "Warm, comforting glow story to banish night fears.",
@@ -467,7 +477,6 @@ export const appJourneyDayNodes = [
       {
         id: "d9-am",
         time: "09:00 AM",
-        timeOfDay: "morning",
         channel: "App Notification",
         title: "2-Min Game: Two Truths & A Silly Fib",
         desc: "'Elephants can fly, carrots are orange, dogs bark.' Quick logical-intuitive sorting exercise.",
@@ -476,8 +485,6 @@ export const appJourneyDayNodes = [
       {
         id: "d9-mid",
         time: "04:15 PM",
-        timeOfDay: "afternoon",
-        isRandomDrop: true,
         channel: "App Notification",
         title: "Brain Byte: The Alpha State Secret",
         desc: "Why positive affirmations whispered 5 minutes before sleep become lasting subconscious beliefs.",
@@ -486,7 +493,6 @@ export const appJourneyDayNodes = [
       {
         id: "d9-pm",
         time: "10:00 PM",
-        timeOfDay: "night",
         channel: "App Notification",
         title: "Bedtime Tale: The Moon's Soft Blanket",
         desc: "Cozy, soothing visualization for deep regenerative rest.",
@@ -501,7 +507,6 @@ export const appJourneyDayNodes = [
       {
         id: "d10-am",
         time: "09:00 AM",
-        timeOfDay: "morning",
         channel: "App Notification",
         title: "2-Min Game: Pattern Builder",
         desc: "Lay out: Fork, Spoon, Fork, __? Have your child complete the sequence. Visual pattern recognition.",
@@ -510,7 +515,6 @@ export const appJourneyDayNodes = [
       {
         id: "d10-pm",
         time: "10:00 PM",
-        timeOfDay: "night",
         channel: "App Notification",
         title: "Bedtime Tale: The Sleepy Mountain",
         desc: "Slow, deep-breathing bedtime tale that settles busy toddlers.",
@@ -525,7 +529,6 @@ export const appJourneyDayNodes = [
       {
         id: "d11-am",
         time: "09:00 AM",
-        timeOfDay: "morning",
         channel: "App Notification",
         title: "2-Min Game: Slow-Mo Robot",
         desc: "Walk across the living room in extreme slow-motion for 30 seconds without laughing. Inhibitory motor control.",
@@ -534,7 +537,6 @@ export const appJourneyDayNodes = [
       {
         id: "d11-pm",
         time: "10:00 PM",
-        timeOfDay: "night",
         channel: "App Notification",
         title: "Bedtime Tale: The Whale’s Lullaby",
         desc: "Ocean wave background harmonies designed for restorative sleep.",
@@ -549,7 +551,6 @@ export const appJourneyDayNodes = [
       {
         id: "d12-am",
         time: "09:00 AM",
-        timeOfDay: "morning",
         channel: "App Notification",
         title: "2-Min Game: Opposites Tennis",
         desc: "You say 'Big', they say 'Tiny!'. Rapid semantic association drill for speed thinking.",
@@ -558,8 +559,6 @@ export const appJourneyDayNodes = [
       {
         id: "d12-mid",
         time: "05:30 PM",
-        timeOfDay: "afternoon",
-        isRandomDrop: true,
         channel: "App Notification",
         title: "Weekend Printable: 5 Speed-Observation Cards",
         desc: "Spot-the-subtle-difference cards to print or play on tablet for family fun this weekend.",
@@ -568,7 +567,6 @@ export const appJourneyDayNodes = [
       {
         id: "d12-pm",
         time: "10:00 PM",
-        timeOfDay: "night",
         channel: "App Notification",
         title: "Bedtime Tale: The Star That Sang",
         desc: "Gentle celestial lullaby story for sweet dreams.",
@@ -583,7 +581,6 @@ export const appJourneyDayNodes = [
       {
         id: "d13-am",
         time: "09:00 AM",
-        timeOfDay: "morning",
         channel: "App Notification",
         title: "2-Min Game: Imaginary Hat",
         desc: "Put on an imaginary chef hat or wizard hat. Act it out for 1 minute. Pure symbolic right-brain play.",
@@ -592,7 +589,6 @@ export const appJourneyDayNodes = [
       {
         id: "d13-pm",
         time: "10:00 PM",
-        timeOfDay: "night",
         channel: "App Notification",
         title: "Bedtime Tale: The Cloud Meadow",
         desc: "A cozy, soft descent into peaceful dreams.",
@@ -607,7 +603,6 @@ export const appJourneyDayNodes = [
       {
         id: "d14-am",
         time: "09:00 AM",
-        timeOfDay: "morning",
         channel: "App Notification",
         title: "2-Min Game: The Memory Walk",
         desc: "Close eyes and describe 3 things in your room without looking. Spatial mental mapping.",
@@ -616,8 +611,6 @@ export const appJourneyDayNodes = [
       {
         id: "d14-mid",
         time: "12:00 PM",
-        timeOfDay: "afternoon",
-        isRandomDrop: true,
         channel: "App Notification",
         title: "Milestone: 2 Weeks of Joyful Moments!",
         desc: "You've unlocked 14 games and 14 bedtime tales together. Tap to view your child's 2-Week Habit Badge!",
@@ -626,7 +619,6 @@ export const appJourneyDayNodes = [
       {
         id: "d14-pm",
         time: "10:00 PM",
-        timeOfDay: "night",
         channel: "App Notification",
         title: "Bedtime Tale: The Kingdom of Sleep",
         desc: "Celebrating two weeks of beautiful bedtime bonding with peaceful dreams.",
