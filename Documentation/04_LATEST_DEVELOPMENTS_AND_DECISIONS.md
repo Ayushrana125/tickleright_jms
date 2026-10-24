@@ -75,3 +75,91 @@ During the latest sprint, several legacy prototypes were overhauled to transitio
 ---
 
 *Next Document: [05_DEVELOPER_AND_AI_GUIDE.md](./05_DEVELOPER_AND_AI_GUIDE.md)*
+
+---
+
+## 📅 October 2026: Journey Inspector Overhaul (Session 2)
+
+---
+
+### Decision 6: Inspector Tab Rename — "Timing & Safety" / "Copy & Preview" → "Schedule" / "Communication"
+
+#### The Problem:
+* "Timing & Safety" was ambiguous — it sounded like a security setting rather than a scheduling tool.
+* "Copy & Preview" felt like a copywriting/marketing term, not a communication configuration panel.
+
+#### The Implementation:
+* Renamed tabs to **⏱ Schedule** and **📩 Communication** — plain, functional language that matches what each tab actually does.
+* Schedule tab always opens by default when a node is selected.
+* Communication tab always opens on `+ New Template` mode regardless of whether a template is already linked.
+
+---
+
+### Decision 7: "Offset" → "Send After"
+
+#### The Problem:
+* "Offset" is a developer/database term not meaningful to counsellors or journey designers.
+
+#### The Implementation:
+* Renamed the field label to **"Send After"** paired with the unit dropdown (Days / Weeks / Months).
+* No data model change — `node.data.offset` remains the persisted field name.
+
+---
+
+### Decision 8: Communication Tab — New Template / Select Existing Flow
+
+#### The Problem:
+* The previous Communication tab showed a pre-filled "Attached Template" dropdown as the primary UI element, forcing users to pick an existing template before seeing any fields. New step creation felt broken.
+
+#### The Implementation:
+* Two-button toggle at the top: **`+ New Template`** (default) and **`Select Existing`**.
+* `+ New Template`: All fields blank with placeholder text. User fills in and hits **Save** → template is created in the library and linked to the step.
+* `Select Existing`: Dropdown appears, picking a template populates all fields. User can edit and save — updates the original template in the library in place.
+* On every node click, the inspector resets to Schedule tab and Communication tab resets to `+ New Template` with blank fields.
+
+---
+
+### Decision 9: Channel-Specific Communication Fields
+
+#### The Problem:
+* A single generic "Message Body" + "Content Type" dropdown was used for all channels. Email had no Subject field. Call had no assignee. App Notification used the template name as the notification title. "Content Type" (Text only / Image + Text) was redundant given each channel now has its own purpose-built fields.
+
+#### The Implementation:
+Removed `Content Type` dropdown entirely. Each channel now has dedicated fields:
+
+| Channel | Fields Added |
+|---|---|
+| **WhatsApp** | Message Body, Image upload (file), File/Document attachment (file) |
+| **Email** | Subject Line, CC, BCC, Email Body, HTML Body toggle (raw HTML textarea), Image upload, File attachment |
+| **Call** | Assign To dropdown (Counsellor / Trainer / Admin), Call Script, SOP Notes |
+| **Gift** | "Fulfilled by Production" read-only badge, Dispatch Instructions, SOP Notes |
+| **App Notification** | Notification Title (separate from template name), Description/Body, In-App Deep Link, Rich Image upload |
+| **SMS** | Message Body, live character counter (160 chars = 1 SMS, 320 = 2 SMS) |
+
+#### Template Schema Changes:
+New fields added to the template object:
+```js
+{
+  subject: string,          // Email subject line
+  cc: string,               // Email CC addresses
+  bcc: string,              // Email BCC addresses
+  htmlBody: string,         // Email HTML body (when useHtml toggle is on)
+  attachments: string,      // "filename::dataURL" — file stored as base64
+  assignTo: string,         // "Counsellor" | "Trainer" | "Admin" | "Production"
+  callScript: string,       // Call channel script
+  notificationTitle: string,// App Notification title (separate from template.name)
+  image: string,            // Base64 data URL for uploaded image
+}
+```
+
+---
+
+### Decision 10: Blank Fields on New Step Creation
+
+#### The Problem:
+* New steps created via the `+` button were pre-filled with labels like "WhatsApp Follow-up", "Wait 3 Days", "Demo Attendance Split". This created noise the user had to clear before entering real content.
+
+#### The Implementation:
+* All new nodes created via `handleSelectStepOption` start with `label: ""`.
+* Step Label input now shows placeholder "Enter step label..." when empty.
+* Communication tab draft state always initialises blank on node selection — fields are populated only when the user explicitly picks "Select Existing" and chooses a template.

@@ -945,7 +945,7 @@ export default function Journey() {
           type: "step",
           position: { x: posX, y: posY },
           data: {
-            label: "Wait 3 Days",
+            label: "",
             offset: 3,
             unit: "Days",
             reference: sourceNode?.data?.reference || "M",
@@ -961,8 +961,8 @@ export default function Journey() {
           type: "route",
           position: { x: posX, y: posY },
           data: {
-            label: "Demo Attendance Split",
-            condition: "Demo Attendance == Attended",
+            label: "",
+            condition: "",
             reference: sourceNode?.data?.reference || "M",
             routes: [
               { id: "yes", label: "Attended (Yes)" },
@@ -981,7 +981,7 @@ export default function Journey() {
           type: opt.type || "step",
           position: { x: posX, y: posY },
           data: {
-            label: `${opt.title} Follow-up`,
+            label: "",
             offset: 2,
             unit: "Days",
             reference: sourceNode?.data?.reference || "M",
@@ -1010,7 +1010,6 @@ export default function Journey() {
       setEdges(nextEdges);
       updateJourneyGraph(selectedJourney.id, nextNodes.map(stripNodeUiData), nextEdges);
       setSelectedNodeId(id);
-      setSideTab("settings");
     },
     [selectedNodeId, selectedJourney, data.events, data.templates, setEdges, setNodes, updateJourneyGraph, saveHistorySnapshot]
   );
@@ -1113,7 +1112,6 @@ export default function Journey() {
         setNodes(nextNodes);
         updateJourneyGraph(selectedJourney.id, nextNodes.map(stripNodeUiData), currentEdges);
         setSelectedNodeId(nodeId);
-        setSideTab("settings");
         return;
       }
 
@@ -1216,7 +1214,6 @@ export default function Journey() {
       setNodes(nextNodes);
       updateJourneyGraph(selectedJourney.id, nextNodes.map(stripNodeUiData), edgesRef.current);
       setSelectedNodeId(targetNodeId);
-      setSideTab("settings");
     },
     [selectedJourney, setNodes, updateJourneyGraph, saveHistorySnapshot]
   );
@@ -1241,7 +1238,6 @@ export default function Journey() {
           onSelectStepOption: handleSelectStepOption,
           onSelectNode: (id) => {
             setSelectedNodeId(id);
-            setSideTab("settings");
           },
           onStackComm: handleStackCommToNode,
           onUnstackNode: handleUnstackNode,
@@ -1375,7 +1371,8 @@ export default function Journey() {
   const [logs, setLogs] = useState([]);
   const [simulating, setSimulating] = useState(false);
   const [speed, setSpeed] = useState("1 day = 1 minute");
-  const [sideTab, setSideTab] = useState("settings");
+  const [showPublishOptions, setShowPublishOptions] = useState(false);
+  const [showSimulationPanel, setShowSimulationPanel] = useState(false);
   const [canvasFullscreen, setCanvasFullscreen] = useState(false);
 
   const journeyLoadedIdRef = useRef(null);
@@ -1535,7 +1532,6 @@ export default function Journey() {
         nodeTypes={nodeTypes}
         onNodeClick={(_, node) => {
           setSelectedNodeId(node.id);
-          setSideTab("settings");
         }}
         zoomOnScroll={true}
         panOnScroll={false}
@@ -2163,10 +2159,13 @@ export default function Journey() {
             <button
               className="btn btn-primary"
               onClick={() => {
-                const nextStatus = selectedJourney.status === "Active" ? "Paused" : "Active";
-                setEdges((current) => current.map((edge) => ({ ...edge, animated: nextStatus === "Active" })));
-                const cleanGraph = getCleanGraph();
-                updateJourney(selectedJourney.id, { status: nextStatus, nodes: cleanGraph.nodes, edges: cleanGraph.edges });
+                if (selectedJourney.status === "Active") {
+                  setEdges((current) => current.map((edge) => ({ ...edge, animated: false })));
+                  const cleanGraph = getCleanGraph();
+                  updateJourney(selectedJourney.id, { status: "Paused", nodes: cleanGraph.nodes, edges: cleanGraph.edges });
+                  return;
+                }
+                setShowPublishOptions(true);
               }}
             >
               {selectedJourney.status === "Active" ? <Pause size={17} /> : <Play size={17} />}
@@ -2186,70 +2185,44 @@ export default function Journey() {
         {!canvasFullscreen && canvas}
 
         <aside className="nowheel panel flex min-h-0 flex-col overflow-hidden rounded-3xl" onWheel={(e) => e.stopPropagation()}>
-          <div className="grid grid-cols-2 border-b border-coral-100 p-2">
-            <button
-              className={`rounded-xl px-3 py-2 text-sm font-black ${sideTab === "settings" ? "bg-coral-50 text-coral-600" : "text-slate-500"}`}
-              onClick={() => setSideTab("settings")}
-            >
-              Settings
-            </button>
-            <button
-              className={`rounded-xl px-3 py-2 text-sm font-black ${sideTab === "simulation" ? "bg-coral-50 text-coral-600" : "text-slate-500"}`}
-              onClick={() => setSideTab("simulation")}
-            >
-              Simulation
-            </button>
-          </div>
-          {sideTab === "settings" ? (
-            <div className="min-h-0 flex-1 overflow-auto p-4">
-              <NodePanel
-                node={selectedNode}
-                events={data.events}
-                templates={data.templates}
-                segments={data.segments}
-                members={data.members}
-                addTemplate={addTemplate}
-                updateTemplate={updateTemplate}
-                onChange={(patch) => {
-                  saveHistorySnapshot();
-                  const currentEdges = edgesRef.current;
-                  let nextNodes;
-                  setNodes((current) => {
-                    nextNodes = current.map((node) => {
-                      if (node.id === selectedNode.id) {
-                        const updatedTemplate = data.templates.find(
-                          (template) => template.id === (patch.templateId || node.data.templateId)
-                        );
-                        return {
-                          ...node,
-                          data: {
-                            ...node.data,
-                            ...patch,
-                            template: updatedTemplate || node.data.template,
-                          },
-                        };
-                      }
-                      return node;
-                    });
-                    return nextNodes;
+          <div className="min-h-0 flex-1 overflow-auto p-4">
+            <NodePanel
+              node={selectedNode}
+              events={data.events}
+              templates={data.templates}
+              segments={data.segments}
+              members={data.members}
+              addTemplate={addTemplate}
+              updateTemplate={updateTemplate}
+              onChange={(patch) => {
+                saveHistorySnapshot();
+                const currentEdges = edgesRef.current;
+                let nextNodes;
+                setNodes((current) => {
+                  nextNodes = current.map((node) => {
+                    if (node.id === selectedNode.id) {
+                      const updatedTemplate = data.templates.find(
+                        (template) => template.id === (patch.templateId || node.data.templateId)
+                      );
+                      return {
+                        ...node,
+                        data: {
+                          ...node.data,
+                          ...patch,
+                          template: updatedTemplate || node.data.template,
+                        },
+                      };
+                    }
+                    return node;
                   });
-                  if (nextNodes && selectedJourney) {
-                    updateJourneyGraph(selectedJourney.id, nextNodes.map(stripNodeUiData), currentEdges);
-                  }
-                }}
-              />
-            </div>
-          ) : (
-            <SimulationPanel
-              counts={counts}
-              logs={logs}
-              simulating={simulating}
-              speed={speed}
-              setSpeed={setSpeed}
-              toggle={() => setSimulating((value) => !value)}
-              clear={() => setLogs([])}
+                  return nextNodes;
+                });
+                if (nextNodes && selectedJourney) {
+                  updateJourneyGraph(selectedJourney.id, nextNodes.map(stripNodeUiData), currentEdges);
+                }
+              }}
             />
-          )}
+          </div>
         </aside>
       </div>
 
@@ -2261,6 +2234,37 @@ export default function Journey() {
         onClose={() => setShowImportModal(false)}
         journeys={data.journeys}
         onImportSuccess={handleImportSuccess}
+      />
+      <PublishOptionsModal
+        isOpen={showPublishOptions}
+        onClose={() => setShowPublishOptions(false)}
+        onPublish={() => {
+          const cleanGraph = getCleanGraph();
+          const liveEdges = cleanGraph.edges.map((edge) => ({ ...edge, animated: true }));
+          setEdges(liveEdges);
+          updateJourney(selectedJourney.id, { status: "Active", nodes: cleanGraph.nodes, edges: liveEdges });
+          setShowPublishOptions(false);
+        }}
+        onSimulate={() => {
+          setLogs([]);
+          setSimulating(true);
+          setShowPublishOptions(false);
+          setShowSimulationPanel(true);
+        }}
+      />
+      <SimulationModal
+        isOpen={showSimulationPanel}
+        onClose={() => {
+          setSimulating(false);
+          setShowSimulationPanel(false);
+        }}
+        counts={counts}
+        logs={logs}
+        simulating={simulating}
+        speed={speed}
+        setSpeed={setSpeed}
+        toggle={() => setSimulating((value) => !value)}
+        clear={() => setLogs([])}
       />
     </div>
   );
@@ -2299,6 +2303,57 @@ function CanvasToolbar({ canvasFullscreen, setCanvasFullscreen, onUndo, onRedo }
       >
         {canvasFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
       </button>
+    </div>
+  );
+}
+
+function PublishOptionsModal({ isOpen, onClose, onPublish, onSimulate }) {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-900/30 p-4 backdrop-blur-sm">
+      <div className="w-full max-w-lg rounded-3xl border border-coral-100 bg-white p-6 shadow-2xl">
+        <div className="mb-5 flex items-start justify-between gap-4">
+          <div>
+            <div className="text-xl font-black text-slate-800">Publish journey</div>
+            <div className="mt-1 text-sm font-bold text-slate-500">Choose how you want to continue with this journey.</div>
+          </div>
+          <button type="button" className="btn btn-ghost !h-9 !w-9 !p-0" onClick={onClose} aria-label="Close publish options">
+            <X size={17} />
+          </button>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <button type="button" className="rounded-2xl border border-coral-200 bg-coral-50 p-4 text-left transition hover:border-coral-400 hover:bg-coral-100" onClick={onPublish}>
+            <div className="mb-2 flex items-center gap-2 text-coral-600"><Play size={17} /> <span className="font-black">Publish to Live</span></div>
+            <div className="text-xs font-bold leading-relaxed text-slate-500">Activate this journey for its enrolled audience.</div>
+          </button>
+          <button type="button" className="rounded-2xl border border-indigo-200 bg-indigo-50 p-4 text-left transition hover:border-indigo-400 hover:bg-indigo-100" onClick={onSimulate}>
+            <div className="mb-2 flex items-center gap-2 text-indigo-600"><Activity size={17} /> <span className="font-black">Start Simulation</span></div>
+            <div className="text-xs font-bold leading-relaxed text-slate-500">Preview journey activity without publishing it live.</div>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SimulationModal({ isOpen, onClose, ...props }) {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-900/30 p-4 backdrop-blur-sm">
+      <div className="flex max-h-[min(760px,calc(100vh-32px))] w-full max-w-xl flex-col overflow-hidden rounded-3xl border border-coral-100 bg-white shadow-2xl">
+        <div className="flex items-center justify-between border-b border-coral-100 px-5 py-4">
+          <div>
+            <div className="text-xl font-black text-slate-800">Journey simulation</div>
+            <div className="text-sm font-bold text-slate-500">Preview activity without publishing to live.</div>
+          </div>
+          <button type="button" className="btn btn-ghost !h-9 !w-9 !p-0" onClick={onClose} aria-label="Close simulation">
+            <X size={17} />
+          </button>
+        </div>
+        <SimulationPanel {...props} />
+      </div>
     </div>
   );
 }
@@ -2638,34 +2693,129 @@ function StackedDayPanel({ node, onChange }) {
 
 function NodePanel({ node, events, templates, segments, members, addTemplate, updateTemplate, onChange }) {
   const [nodeSubTab, setNodeSubTab] = useState("timing"); // "timing" | "content"
+  const [templateMode, setTemplateMode] = useState("new"); // "new" | "existing"
+
+  const defaultChannel = node?.type === "human" ? "Call" : "WhatsApp";
+  const linkedTemplate = templates.find((t) => t.id === node?.data?.templateId);
+
+  const [draft, setDraft] = useState(() => ({
+    name: "",
+    channel: defaultChannel,
+    contentType: "Text only",
+    content: "",
+    stakeholderNotes: "",
+    deepLink: "",
+    image: "",
+    subject: "",
+    cc: "",
+    bcc: "",
+    htmlBody: "",
+    useHtml: false,
+    attachments: "",
+    assignTo: defaultChannel === "Call" ? "Counsellor" : "Production",
+    callScript: "",
+    notificationTitle: "",
+  }));
+  const [draftSaved, setDraftSaved] = useState(false);
+
+  const prevNodeId = useRef(node?.id);
+  useEffect(() => {
+    if (node?.id !== prevNodeId.current) {
+      prevNodeId.current = node?.id;
+      const tpl = templates.find((t) => t.id === node?.data?.templateId);
+      const ch = tpl?.channel || defaultChannel;
+      setDraft({
+        name: tpl?.name || "",
+        channel: ch,
+        contentType: tpl?.contentType || "Text only",
+        content: tpl?.content || "",
+        stakeholderNotes: tpl?.stakeholderNotes || "",
+        deepLink: tpl?.deepLink || "",
+        image: tpl?.image || "",
+        subject: tpl?.subject || "",
+        cc: tpl?.cc || "",
+        bcc: tpl?.bcc || "",
+        htmlBody: tpl?.htmlBody || "",
+        useHtml: Boolean(tpl?.htmlBody),
+        attachments: tpl?.attachments || "",
+        assignTo: tpl?.assignTo || (ch === "Call" ? "Counsellor" : "Production"),
+        callScript: tpl?.callScript || "",
+        notificationTitle: tpl?.notificationTitle || "",
+      });
+      setNodeSubTab("timing");
+      setTemplateMode("new");
+      setDraftSaved(false);
+    }
+  }, [node?.id]);
+
+  const patchDraft = (patch) => {
+    setDraft((d) => ({ ...d, ...patch }));
+    setDraftSaved(false);
+  };
+
+  const handleSelectExisting = (templateId) => {
+    const tpl = templates.find((t) => t.id === templateId);
+    if (!tpl) return;
+    const ch = tpl.channel || defaultChannel;
+    setDraft({
+      name: tpl.name,
+      channel: ch,
+      contentType: tpl.contentType || "Text only",
+      content: tpl.content || "",
+      stakeholderNotes: tpl.stakeholderNotes || "",
+      deepLink: tpl.deepLink || "",
+      image: tpl.image || "",
+      subject: tpl.subject || "",
+      cc: tpl.cc || "",
+      bcc: tpl.bcc || "",
+      htmlBody: tpl.htmlBody || "",
+      useHtml: Boolean(tpl.htmlBody),
+      attachments: tpl.attachments || "",
+      assignTo: tpl.assignTo || (ch === "Call" ? "Counsellor" : "Production"),
+      callScript: tpl.callScript || "",
+      notificationTitle: tpl.notificationTitle || "",
+    });
+    onChange({ templateId: tpl.id, label: tpl.name });
+    setTemplateMode("existing");
+    setDraftSaved(false);
+  };
+
+  const handleSave = () => {
+    const payload = {
+      name: draft.name || "Untitled Template",
+      channel: draft.channel,
+      contentType: draft.contentType,
+      content: draft.content,
+      stakeholderNotes: draft.stakeholderNotes,
+      deepLink: draft.deepLink,
+      image: draft.image,
+      subject: draft.subject,
+      cc: draft.cc,
+      bcc: draft.bcc,
+      htmlBody: draft.useHtml ? draft.htmlBody : "",
+      attachments: draft.attachments,
+      assignTo: draft.assignTo,
+      callScript: draft.callScript,
+      notificationTitle: draft.notificationTitle,
+    };
+    const existingLinked = templates.find((t) => t.id === node?.data?.templateId);
+    if (existingLinked) {
+      updateTemplate(existingLinked.id, payload);
+    } else {
+      const id = `tpl-${Date.now()}`;
+      addTemplate({ id, ...payload });
+      onChange({ templateId: id, label: payload.name });
+    }
+    setDraftSaved(true);
+  };
 
   if (!node) return <div className="p-4 text-xs font-bold text-slate-400">Select a node on the canvas</div>;
   if (node.type === "stackedDay") {
     return <StackedDayPanel node={node} onChange={onChange} />;
   }
 
-  const selectedTemplate = templates.find((template) => template.id === node.data.templateId);
   const isTemplateNode = node.type !== "start" && node.type !== "event" && node.type !== "route" && node.type !== "end";
-  const isHumanTemplate = selectedTemplate?.channel === "Call" || selectedTemplate?.channel === "Gift";
-
-  const createAndAttachTemplate = () => {
-    const id = `tpl-${Date.now()}`;
-    const channel = node.type === "human" ? "Call" : "WhatsApp";
-    const template = {
-      id,
-      name: "New Journey Template",
-      channel,
-      contentType: channel === "Call" || channel === "Gift" ? "Instructions" : "Text only",
-      content:
-        channel === "Call" || channel === "Gift"
-          ? "Add instructions for the counsellor/stakeholder."
-          : "Hi {{parent_name}}, welcome to Tickle Right! We are excited to guide {{child_name}}.",
-      stakeholderNotes: "",
-      image: "",
-    };
-    addTemplate(template);
-    onChange({ templateId: id, label: template.name });
-  };
+  const isHumanTemplate = draft.channel === "Call" || draft.channel === "Gift";
 
   return (
     <div className="space-y-4">
@@ -2697,7 +2847,7 @@ function NodePanel({ node, events, templates, segments, members, addTemplate, up
         </div>
       )}
 
-      {/* TAB 1: Timing & Autopilot Settings */}
+      {/* TAB 1: Schedule */}
       {(nodeSubTab === "timing" || !isTemplateNode) && (
         <section className="space-y-4">
           <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -2714,7 +2864,6 @@ function NodePanel({ node, events, templates, segments, members, addTemplate, up
             </div>
 
             <div className="space-y-3">
-              {/* Upgrade to Stacked Day Node Banner */}
               {isTemplateNode && (
                 <div className="rounded-xl border border-indigo-200 bg-indigo-50/70 p-3 shadow-2xs">
                   <div className="flex items-center justify-between gap-2">
@@ -2744,6 +2893,7 @@ function NodePanel({ node, events, templates, segments, members, addTemplate, up
                 Step Label
                 <input
                   className="field mt-1 text-xs font-bold"
+                  placeholder="Enter step label..."
                   value={node.data.label || ""}
                   onChange={(event) => onChange({ label: event.target.value })}
                 />
@@ -2795,7 +2945,6 @@ function NodePanel({ node, events, templates, segments, members, addTemplate, up
                       ))}
                     </select>
                   </label>
-                  {/* Database Source Field Helper */}
                   {(() => {
                     const selectedEv = events?.find(
                       (item) => item.name === (node.data.triggerEvent || "Member Joined the Program")
@@ -2804,12 +2953,8 @@ function NodePanel({ node, events, templates, segments, members, addTemplate, up
                     return (
                       <div className="rounded-xl bg-slate-50 p-2.5 text-[11px] border border-slate-100">
                         <div className="flex items-center justify-between text-slate-500">
-                          <span className="text-[10px] uppercase font-black text-slate-400">
-                            DB Source:
-                          </span>
-                          <span className="font-mono text-coral-600 font-bold">
-                            {selectedEv.dbField}
-                          </span>
+                          <span className="text-[10px] uppercase font-black text-slate-400">DB Source:</span>
+                          <span className="font-mono text-coral-600 font-bold">{selectedEv.dbField}</span>
                         </div>
                         <div className="mt-1 text-[10px] text-slate-400 font-semibold">
                           Trigger: {selectedEv.triggerType}
@@ -2914,42 +3059,95 @@ function NodePanel({ node, events, templates, segments, members, addTemplate, up
         </section>
       )}
 
-      {/* TAB 2: Message & In-Context Preview */}
+      {/* TAB 2: Communication */}
       {nodeSubTab === "content" && isTemplateNode && (
         <section className="space-y-4">
-          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-            <div className="mb-3 flex items-center justify-between gap-2">
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm space-y-3">
+
+            <div className="flex items-center justify-between">
               <span className="text-base font-black text-slate-800">Message</span>
+              {draftSaved && (
+                <span className="flex items-center gap-1 rounded-md bg-emerald-50 px-2 py-0.5 text-[10px] font-black text-emerald-700 border border-emerald-200">
+                  <CheckCircle2 size={10} /> Saved
+                </span>
+              )}
+            </div>
+
+            {/* New Template / Select Existing toggle */}
+            <div className="flex items-center rounded-xl bg-slate-100 p-1 text-xs font-black">
               <button
                 type="button"
-                className="btn btn-ghost !px-2 !py-1 text-xs text-coral-600"
-                onClick={createAndAttachTemplate}
+                onClick={() => {
+                  setTemplateMode("new");
+                  setDraft({ name: "", channel: draft.channel, contentType: "Text only", content: "", stakeholderNotes: "", deepLink: "", image: "" });
+                  onChange({ templateId: null });
+                  setDraftSaved(false);
+                }}
+                className={`flex-1 rounded-lg py-1.5 px-2 transition ${
+                  templateMode === "new" ? "bg-white text-coral-600 shadow-xs" : "text-slate-500 hover:text-slate-800"
+                }`}
               >
-                <Plus size={13} /> New
+                + New Template
+              </button>
+              <button
+                type="button"
+                onClick={() => setTemplateMode("existing")}
+                className={`flex-1 rounded-lg py-1.5 px-2 transition ${
+                  templateMode === "existing" ? "bg-white text-coral-600 shadow-xs" : "text-slate-500 hover:text-slate-800"
+                }`}
+              >
+                Select Existing
               </button>
             </div>
 
-            {/* Primary: message content fields — always visible first */}
-            <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-2">
-                <label className="block text-xs font-black uppercase text-slate-500">
+            {/* Existing picker — only shown when "Select Existing" is active */}
+            {templateMode === "existing" && (
+              <label className="block text-xs font-black uppercase text-slate-500">
+                Select Existing Template
+                <select
+                  className="field mt-1 text-xs font-bold"
+                  value={node.data.templateId || ""}
+                  onChange={(e) => handleSelectExisting(e.target.value)}
+                >
+                  <option value="">— pick to populate fields —</option>
+                  {templates.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.name} ({t.channel})
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+
+            {/* Fields */}
+            <div className="space-y-3 border-t border-slate-100 pt-3">
+              <label className="block text-xs font-black uppercase text-slate-500">
+                Template Name
+                <input
+                  className="field mt-1 text-xs font-bold"
+                  placeholder="Enter template name..."
+                  value={draft.name}
+                  onChange={(e) => patchDraft({ name: e.target.value })}
+                />
+              </label>
+
+              <label className="block text-xs font-black uppercase text-slate-500">
                   Channel
                   <select
                     className="field mt-1 text-xs font-bold"
-                    value={selectedTemplate?.channel || "WhatsApp"}
-                    onChange={(event) => {
-                      const channel = event.target.value;
-                      if (selectedTemplate) {
-                        updateTemplate(selectedTemplate.id, {
-                          channel,
-                          contentType:
-                            channel === "Call" || channel === "Gift"
-                              ? "Instructions"
-                              : channel === "App Notification"
-                              ? "Push Notification"
-                              : "Text only",
-                        });
-                      }
+                    value={draft.channel}
+                    onChange={(e) => {
+                      const channel = e.target.value;
+                      patchDraft({
+                        channel,
+                        contentType:
+                          channel === "Call" || channel === "Gift"
+                            ? "Instructions"
+                            : channel === "App Notification"
+                            ? "Push Notification"
+                            : "Text only",
+                        assignTo: channel === "Call" ? "Counsellor" : channel === "Gift" ? "Production" : draft.assignTo,
+                      });
                     }}
                   >
                     <option>WhatsApp</option>
@@ -2957,126 +3155,323 @@ function NodePanel({ node, events, templates, segments, members, addTemplate, up
                     <option>Call</option>
                     <option>Gift</option>
                     <option>App Notification</option>
+                    <option>SMS</option>
                   </select>
                 </label>
 
-                {!isHumanTemplate && (
+              {/* ── WHATSAPP ── */}
+              {draft.channel === "WhatsApp" && (
+                <>
                   <label className="block text-xs font-black uppercase text-slate-500">
-                    Content Type
-                    <select
-                      className="field mt-1 text-xs font-bold"
-                      value={selectedTemplate?.contentType || "Text only"}
-                      onChange={(event) => {
-                        if (selectedTemplate) {
-                          updateTemplate(selectedTemplate.id, { contentType: event.target.value });
-                        }
-                      }}
-                    >
-                      <option>Text only</option>
-                      <option>Image + Text</option>
+                    Message Body
+                    <textarea
+                      className="field mt-1 min-h-24 text-xs font-medium leading-relaxed"
+                      placeholder="Write your message... use {{parent_name}}, {{child_name}} for personalisation"
+                      value={draft.content}
+                      onChange={(e) => patchDraft({ content: e.target.value })}
+                    />
+                  </label>
+                  <div>
+                    <div className="text-xs font-black uppercase text-slate-500 mb-1">Image (optional)</div>
+                    {draft.image ? (
+                      <div className="relative rounded-xl overflow-hidden border border-slate-200">
+                        <img src={draft.image} alt="" className="w-full max-h-32 object-cover" />
+                        <button type="button" onClick={() => patchDraft({ image: "" })} className="absolute top-1.5 right-1.5 grid h-5 w-5 place-items-center rounded-full bg-slate-900/70 text-white hover:bg-rose-600 transition"><X size={11} /></button>
+                      </div>
+                    ) : (
+                      <label className="flex flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 p-3 cursor-pointer hover:border-coral-300 hover:bg-coral-50/40 transition">
+                        <Image size={16} className="text-slate-400" />
+                        <span className="text-[11px] font-bold text-slate-500">Click to upload</span>
+                        <span className="text-[10px] text-slate-400">PNG, JPG, WEBP</span>
+                        <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (!f) return; const r = new FileReader(); r.onload = (ev) => patchDraft({ image: ev.target.result }); r.readAsDataURL(f); }} />
+                      </label>
+                    )}
+                  </div>
+                  <label className="block text-xs font-black uppercase text-slate-500">
+                    File / Document (optional)
+                    {draft.attachments ? (
+                      <div className="mt-1 flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+                        <span className="text-[11px] font-bold text-slate-700 truncate">📎 {draft.attachments.split("::")[0]}</span>
+                        <button type="button" onClick={() => patchDraft({ attachments: "" })} className="ml-2 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-slate-200 hover:bg-rose-100 hover:text-rose-600 text-slate-500 transition"><X size={11} /></button>
+                      </div>
+                    ) : (
+                      <label className="mt-1 flex items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 p-3 cursor-pointer hover:border-coral-300 hover:bg-coral-50/40 transition">
+                        <FileSpreadsheet size={15} className="text-slate-400" />
+                        <span className="text-[11px] font-bold text-slate-500">Click to attach file</span>
+                        <input type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (!f) return; const r = new FileReader(); r.onload = (ev) => patchDraft({ attachments: `${f.name}::${ev.target.result}` }); r.readAsDataURL(f); }} />
+                      </label>
+                    )}
+                  </label>
+                </>
+              )}
+
+              {/* ── EMAIL ── */}
+              {draft.channel === "Email" && (
+                <>
+                  <label className="block text-xs font-black uppercase text-slate-500">
+                    Subject Line
+                    <input className="field mt-1 text-xs font-bold" placeholder="e.g. First month reflections for {{child_name}}" value={draft.subject} onChange={(e) => patchDraft({ subject: e.target.value })} />
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <label className="block text-xs font-black uppercase text-slate-500">
+                      CC
+                      <input className="field mt-1 text-xs" placeholder="email@example.com" value={draft.cc} onChange={(e) => patchDraft({ cc: e.target.value })} />
+                    </label>
+                    <label className="block text-xs font-black uppercase text-slate-500">
+                      BCC
+                      <input className="field mt-1 text-xs" placeholder="email@example.com" value={draft.bcc} onChange={(e) => patchDraft({ bcc: e.target.value })} />
+                    </label>
+                  </div>
+                  {/* HTML toggle */}
+                  <label className="flex items-center gap-2.5 cursor-pointer rounded-xl bg-slate-50 p-2.5 border border-slate-200">
+                    <input type="checkbox" className="accent-coral-500" checked={draft.useHtml} onChange={(e) => patchDraft({ useHtml: e.target.checked })} />
+                    <div>
+                      <div className="text-xs font-extrabold text-slate-800">Use HTML Body</div>
+                      <div className="text-[10px] text-slate-500">Toggle on to write raw HTML instead of plain text</div>
+                    </div>
+                  </label>
+                  {draft.useHtml ? (
+                    <label className="block text-xs font-black uppercase text-slate-500">
+                      HTML Body
+                      <textarea className="field mt-1 min-h-32 text-xs font-mono leading-relaxed" placeholder="<p>Hi {{parent_name}},</p>" value={draft.htmlBody} onChange={(e) => patchDraft({ htmlBody: e.target.value })} />
+                    </label>
+                  ) : (
+                    <label className="block text-xs font-black uppercase text-slate-500">
+                      Email Body
+                      <textarea className="field mt-1 min-h-24 text-xs font-medium leading-relaxed" placeholder="Write your email here... use {{parent_name}}, {{child_name}} for personalisation" value={draft.content} onChange={(e) => patchDraft({ content: e.target.value })} />
+                    </label>
+                  )}
+                  <div>
+                    <div className="text-xs font-black uppercase text-slate-500 mb-1">Image (optional)</div>
+                    {draft.image ? (
+                      <div className="relative rounded-xl overflow-hidden border border-slate-200">
+                        <img src={draft.image} alt="" className="w-full max-h-28 object-cover" />
+                        <button type="button" onClick={() => patchDraft({ image: "" })} className="absolute top-1.5 right-1.5 grid h-5 w-5 place-items-center rounded-full bg-slate-900/70 text-white hover:bg-rose-600 transition"><X size={11} /></button>
+                      </div>
+                    ) : (
+                      <label className="flex flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 p-3 cursor-pointer hover:border-coral-300 hover:bg-coral-50/40 transition">
+                        <Image size={16} className="text-slate-400" />
+                        <span className="text-[11px] font-bold text-slate-500">Click to upload</span>
+                        <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (!f) return; const r = new FileReader(); r.onload = (ev) => patchDraft({ image: ev.target.result }); r.readAsDataURL(f); }} />
+                      </label>
+                    )}
+                  </div>
+                  <label className="block text-xs font-black uppercase text-slate-500">
+                    Attachments
+                    {draft.attachments ? (
+                      <div className="mt-1 flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+                        <span className="text-[11px] font-bold text-slate-700 truncate">📎 {draft.attachments.split("::")[0]}</span>
+                        <button type="button" onClick={() => patchDraft({ attachments: "" })} className="ml-2 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-slate-200 hover:bg-rose-100 hover:text-rose-600 text-slate-500 transition"><X size={11} /></button>
+                      </div>
+                    ) : (
+                      <label className="mt-1 flex items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 p-3 cursor-pointer hover:border-coral-300 hover:bg-coral-50/40 transition">
+                        <FileSpreadsheet size={15} className="text-slate-400" />
+                        <span className="text-[11px] font-bold text-slate-500">Click to attach file</span>
+                        <input type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.png,.jpg" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (!f) return; const r = new FileReader(); r.onload = (ev) => patchDraft({ attachments: `${f.name}::${ev.target.result}` }); r.readAsDataURL(f); }} />
+                      </label>
+                    )}
+                  </label>
+                </>
+              )}
+
+              {/* ── CALL ── */}
+              {draft.channel === "Call" && (
+                <>
+                  <label className="block text-xs font-black uppercase text-slate-500">
+                    Assign To
+                    <select className="field mt-1 text-xs font-bold" value={draft.assignTo} onChange={(e) => patchDraft({ assignTo: e.target.value })}>
+                      <option value="Counsellor">Counsellor</option>
+                      <option value="Trainer">Trainer</option>
+                      <option value="Admin">Admin</option>
                     </select>
                   </label>
-                )}
-              </div>
+                  <label className="block text-xs font-black uppercase text-slate-500">
+                    Call Script
+                    <textarea className="field mt-1 min-h-24 text-xs font-medium leading-relaxed" placeholder="What should the counsellor say on this call..." value={draft.content} onChange={(e) => patchDraft({ content: e.target.value })} />
+                  </label>
+                  <label className="block text-xs font-black uppercase text-slate-500">
+                    SOP Notes
+                    <textarea className="field mt-1 min-h-16 text-xs" placeholder="Internal notes — escalation steps, what to log, etc." value={draft.stakeholderNotes} onChange={(e) => patchDraft({ stakeholderNotes: e.target.value })} />
+                  </label>
+                </>
+              )}
 
-              <label className="block text-xs font-black uppercase text-slate-500">
-                {isHumanTemplate ? "SOP Script" : "Message Body"}
-                <textarea
-                  className="field mt-1 min-h-24 text-xs font-medium leading-relaxed"
-                  value={selectedTemplate?.content || ""}
-                  onChange={(event) => {
-                    if (selectedTemplate) updateTemplate(selectedTemplate.id, { content: event.target.value });
-                  }}
-                />
-              </label>
+              {/* ── GIFT ── */}
+              {draft.channel === "Gift" && (
+                <>
+                  <div className="flex items-center gap-2 rounded-xl bg-amber-50 border border-amber-200 px-3 py-2">
+                    <span className="text-sm">🎁</span>
+                    <div>
+                      <div className="text-xs font-black text-amber-900">Fulfilled by Production</div>
+                      <div className="text-[10px] text-amber-700 font-semibold">Gift dispatch is always handled by the production team</div>
+                    </div>
+                  </div>
+                  <label className="block text-xs font-black uppercase text-slate-500">
+                    Dispatch Instructions
+                    <textarea className="field mt-1 min-h-24 text-xs font-medium leading-relaxed" placeholder="What to send, confirm address before dispatch..." value={draft.content} onChange={(e) => patchDraft({ content: e.target.value })} />
+                  </label>
+                  <label className="block text-xs font-black uppercase text-slate-500">
+                    SOP Notes
+                    <textarea className="field mt-1 min-h-16 text-xs" placeholder="Upload delivery note and comment once delivered..." value={draft.stakeholderNotes} onChange={(e) => patchDraft({ stakeholderNotes: e.target.value })} />
+                  </label>
+                </>
+              )}
 
-              {isHumanTemplate && (
+              {/* ── APP NOTIFICATION ── */}
+              {draft.channel === "App Notification" && (
+                <>
+                  <label className="block text-xs font-black uppercase text-slate-500">
+                    Notification Title
+                    <input className="field mt-1 text-xs font-bold" placeholder="e.g. 2-Min Game: The Disappearing Spoon" value={draft.notificationTitle} onChange={(e) => patchDraft({ notificationTitle: e.target.value })} />
+                  </label>
+                  <label className="block text-xs font-black uppercase text-slate-500">
+                    Description / Body
+                    <textarea className="field mt-1 min-h-20 text-xs font-medium leading-relaxed" placeholder="Short message shown below the title..." value={draft.content} onChange={(e) => patchDraft({ content: e.target.value })} />
+                  </label>
+                  <label className="block text-xs font-black uppercase text-slate-500">
+                    In-App Deep Link
+                    <input type="text" className="field mt-1 text-xs font-mono font-medium text-indigo-700" placeholder="e.g. tr://activity/daily-spark" value={draft.deepLink} onChange={(e) => patchDraft({ deepLink: e.target.value })} />
+                  </label>
+                  <div>
+                    <div className="text-xs font-black uppercase text-slate-500 mb-1">Rich Image (optional)</div>
+                    {draft.image ? (
+                      <div className="relative rounded-xl overflow-hidden border border-slate-200">
+                        <img src={draft.image} alt="" className="w-full max-h-28 object-cover" />
+                        <button type="button" onClick={() => patchDraft({ image: "" })} className="absolute top-1.5 right-1.5 grid h-5 w-5 place-items-center rounded-full bg-slate-900/70 text-white hover:bg-rose-600 transition"><X size={11} /></button>
+                      </div>
+                    ) : (
+                      <label className="flex flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 p-3 cursor-pointer hover:border-coral-300 hover:bg-coral-50/40 transition">
+                        <Image size={16} className="text-slate-400" />
+                        <span className="text-[11px] font-bold text-slate-500">Click to upload</span>
+                        <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (!f) return; const r = new FileReader(); r.onload = (ev) => patchDraft({ image: ev.target.result }); r.readAsDataURL(f); }} />
+                      </label>
+                    )}
+                  </div>
+                </>
+              )}
+
+              {/* ── SMS ── */}
+              {draft.channel === "SMS" && (
                 <label className="block text-xs font-black uppercase text-slate-500">
-                  Counsellor SOP Notes
+                  Message
                   <textarea
-                    className="field mt-1 min-h-16 text-xs"
-                    value={selectedTemplate?.stakeholderNotes || ""}
-                    onChange={(event) => {
-                      if (selectedTemplate) updateTemplate(selectedTemplate.id, { stakeholderNotes: event.target.value });
-                    }}
+                    className="field mt-1 min-h-20 text-xs font-medium leading-relaxed"
+                    placeholder="Write your SMS here... keep under 160 characters for single message"
+                    value={draft.content}
+                    onChange={(e) => patchDraft({ content: e.target.value })}
+                    maxLength={320}
                   />
+                  <div className="mt-1 text-right text-[10px] font-bold text-slate-400">{draft.content.length} / 160 chars {draft.content.length > 160 ? "· 2 SMS" : "· 1 SMS"}</div>
                 </label>
               )}
 
-              {selectedTemplate?.channel === "App Notification" && (
-                <label className="block text-xs font-black uppercase text-slate-500">
-                  In-App Destination (Deep Link URL)
-                  <input
-                    type="text"
-                    className="field mt-1 text-xs font-mono font-medium text-indigo-700"
-                    placeholder="e.g. tr://activity/daily-spark or tr://stories/bedtime"
-                    value={selectedTemplate?.deepLink || ""}
-                    onChange={(event) => {
-                      if (selectedTemplate) updateTemplate(selectedTemplate.id, { deepLink: event.target.value });
-                    }}
-                  />
-                </label>
-              )}
-            </div>
-
-            {/* Secondary: template library linkage — clearly visible but not the lead */}
-            <div className="mt-4 pt-3 border-t border-slate-100">
-              <label className="block text-xs font-black uppercase text-slate-500">
-                Saved as Template
-                <select
-                  className="field mt-1 text-xs font-bold"
-                  value={node.data.templateId || ""}
-                  onChange={(event) => onChange({ templateId: event.target.value })}
-                >
-                  <option value="">— select existing template —</option>
-                  {templates.map((template) => (
-                    <option key={template.id} value={template.id}>
-                      {template.name} ({template.channel})
-                    </option>
-                  ))}
-                </select>
-              </label>
+              <button
+                type="button"
+                onClick={handleSave}
+                className="w-full rounded-xl bg-coral-500 hover:bg-coral-600 text-white text-xs font-black py-2.5 transition shadow-xs"
+              >
+                {node.data.templateId ? "Save Changes to Template" : "Save & Add to Templates"}
+              </button>
             </div>
           </div>
 
-          {/* In-Context Channel Simulation Card */}
-          {selectedTemplate && (
+          {/* Live Preview */}
+          {(draft.content || draft.notificationTitle) && (
             <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 shadow-sm">
               <div className="mb-2 flex items-center justify-between">
-                <span className="text-[11px] font-black uppercase tracking-wider text-slate-500">
-                  Customer Simulation
-                </span>
-                <ChannelBadge channel={selectedTemplate.channel} />
+                <span className="text-[11px] font-black uppercase tracking-wider text-slate-500">Preview</span>
+                <ChannelBadge channel={draft.channel} />
               </div>
-
-              {selectedTemplate.channel === "App Notification" ? (
-                <div className="rounded-xl border border-slate-700 bg-slate-900 p-3.5 shadow-sm text-white">
+              {draft.channel === "App Notification" ? (
+                <div className="rounded-xl border border-slate-700 bg-slate-900 p-3.5 text-white">
                   <div className="flex items-center justify-between text-[10px] text-slate-400 mb-1.5">
                     <span className="font-bold text-indigo-300">TR • Push Notification</span>
                     <span>now</span>
                   </div>
-                  <div className="text-xs font-black text-white">{selectedTemplate.name}</div>
+                  {draft.image && <img src={draft.image} alt="" className="w-full rounded-lg mb-2 max-h-24 object-cover" />}
+                  <div className="text-xs font-black text-white">{draft.notificationTitle || draft.name || "Untitled"}</div>
                   <div className="text-[11px] font-medium leading-relaxed text-slate-300 whitespace-pre-line mt-1">
-                    {renderHighlightedMessage(selectedTemplate.content)}
+                    {renderHighlightedMessage(draft.content)}
                   </div>
-                  {selectedTemplate.deepLink && (
+                  {draft.deepLink && (
                     <div className="mt-2.5 pt-2 border-t border-slate-800 text-[10px] text-indigo-400 font-mono">
-                      Tap → {selectedTemplate.deepLink}
+                      Tap → {draft.deepLink}
                     </div>
                   )}
                 </div>
-              ) : (
-                <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-xs">
-                  {selectedTemplate.image && (
-                    <div className="mb-2 flex items-center gap-1.5 rounded-lg bg-coral-50 p-1.5 text-xs font-bold text-coral-600">
-                      <Image size={13} /> {selectedTemplate.image}
+              ) : draft.channel === "WhatsApp" ? (
+                <div className="rounded-xl bg-[#075e54] p-3 text-white">
+                  <div className="flex items-center justify-between text-[10px] text-emerald-200 mb-2">
+                    <span className="font-bold">Tickle Right</span>
+                    <span>now ✓✓</span>
+                  </div>
+                  <div className="rounded-xl bg-white p-2.5 text-slate-800">
+                    {draft.image && <img src={draft.image} alt="" className="w-full rounded-lg mb-1.5 max-h-24 object-cover" />}
+                    <div className="text-[11px] font-semibold leading-relaxed whitespace-pre-line">
+                      {renderHighlightedMessage(draft.content)}
                     </div>
-                  )}
-                  <div className="text-xs font-semibold leading-relaxed text-slate-700 whitespace-pre-line">
-                    {renderHighlightedMessage(selectedTemplate.content)}
+                    {draft.attachments && (
+                      <div className="mt-1.5 flex items-center gap-1 text-[10px] font-bold text-sky-700">
+                        📎 {draft.attachments.split("::")[0]}
+                      </div>
+                    )}
                   </div>
                 </div>
-              )}
+              ) : draft.channel === "Email" ? (
+                <div className="rounded-xl border border-sky-200 bg-white p-3">
+                  <div className="text-[10px] font-bold text-sky-700 border-b border-sky-100 pb-1 mb-1.5 space-y-0.5">
+                    <div>From: admissions@tickleright.com</div>
+                    {draft.subject && <div className="font-black text-slate-800">Subject: {draft.subject}</div>}
+                    {draft.cc && <div className="text-slate-500">CC: {draft.cc}</div>}
+                  </div>
+                  {draft.image && <img src={draft.image} alt="" className="w-full rounded-lg mb-1.5 max-h-24 object-cover" />}
+                  <div className="text-[11px] font-semibold leading-relaxed text-slate-700 whitespace-pre-line">
+                    {renderHighlightedMessage(draft.useHtml ? draft.htmlBody : draft.content)}
+                  </div>
+                  {draft.attachments && (
+                    <div className="mt-1.5 flex items-center gap-1 text-[10px] font-bold text-slate-500 border-t border-slate-100 pt-1.5">
+                      📎 {draft.attachments}
+                    </div>
+                  )}
+                </div>
+              ) : draft.channel === "Call" ? (
+                <div className="rounded-xl border border-orange-200 bg-orange-50 p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[10px] font-black text-orange-800">📞 Call Task</span>
+                    <span className="rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-black text-orange-700 border border-orange-200">
+                      → {draft.assignTo}
+                    </span>
+                  </div>
+                  <div className="text-[11px] font-semibold text-slate-700 whitespace-pre-line leading-relaxed">
+                    {renderHighlightedMessage(draft.content)}
+                  </div>
+                  {draft.stakeholderNotes && (
+                    <div className="mt-1.5 pt-1.5 border-t border-orange-200 text-[10px] text-orange-700 font-bold">
+                      SOP: {draft.stakeholderNotes}
+                    </div>
+                  )}
+                </div>
+              ) : draft.channel === "Gift" ? (
+                <div className="rounded-xl border border-pink-200 bg-pink-50 p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[10px] font-black text-pink-800">🎁 Gift Dispatch</span>
+                    <span className="rounded-full bg-pink-100 px-2 py-0.5 text-[10px] font-black text-pink-700 border border-pink-200">
+                      Production
+                    </span>
+                  </div>
+                  <div className="text-[11px] font-semibold text-slate-700 whitespace-pre-line leading-relaxed">
+                    {renderHighlightedMessage(draft.content)}
+                  </div>
+                </div>
+              ) : draft.channel === "SMS" ? (
+                <div className="rounded-xl border border-blue-200 bg-blue-50 p-3">
+                  <div className="text-[10px] font-black text-blue-800 mb-1">💬 SMS Flash</div>
+                  <div className="text-[11px] font-semibold text-slate-700 whitespace-pre-line leading-relaxed">
+                    {renderHighlightedMessage(draft.content)}
+                  </div>
+                  <div className="mt-1.5 text-right text-[10px] font-bold text-blue-400">{draft.content.length} chars</div>
+                </div>
+              ) : null}
             </div>
           )}
         </section>
